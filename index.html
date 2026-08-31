@@ -79,27 +79,9 @@
         <!-- Gaps Tracker Content -->
         <div id="gaps-content">
             <div id="dashboard" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8"></div>
-            <div class="flex flex-wrap gap-4 mb-6">
-                 <button id="email-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm bg-[#F5D042] text-[#0A174E] font-semibold hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0A174E]">Copy Gaps Report</button>
-            </div>
-            <div class="bg-white shadow-md rounded-lg overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">ID</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Date Identified</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Identified Gap</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Corrective Action(s)</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Owner/Team</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Notes / Next Steps</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tracker-table-body" class="bg-white divide-y divide-gray-200"></tbody>
-                </table>
-            </div>
-            <div class="mt-10 bg-white p-6 shadow-md rounded-lg">
+
+            <!-- Add New Gap form (moved to top) -->
+            <div class="bg-white p-6 shadow-md rounded-lg mb-8">
                 <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Add New Gap</h2>
                 <form id="add-gap-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div>
@@ -118,6 +100,36 @@
                         <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0A174E] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F5D042]">Add Item</button>
                     </div>
                 </form>
+            </div>
+
+            <div class="flex flex-wrap gap-4 mb-6">
+                 <button id="email-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm bg-[#F5D042] text-[#0A174E] font-semibold hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0A174E]">Copy Gaps Report</button>
+            </div>
+
+            <!-- Gaps sub-tabs: Active vs Completed -->
+            <div class="border-b border-gray-200 mb-4">
+                <nav class="-mb-px flex space-x-8" aria-label="Gap tabs">
+                    <button id="gap-sub-tab-active" class="sub-tab-btn active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Active</button>
+                    <button id="gap-sub-tab-completed" class="sub-tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Completed</button>
+                </nav>
+            </div>
+
+            <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Date Identified</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Identified Gap</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Corrective Action(s)</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Owner/Team</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Notes / Next Steps</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tracker-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
             </div>
         </div>
 
@@ -206,6 +218,7 @@
         let gapsData = [];
         let remindersData = [];
         let currentFilter = 'All';
+        let gapsView = 'active'; // 'active' = Not Started / In Progress / On Hold; 'completed' = Implemented
         let unsubscribeSnapshot = null;
 
         // Auth DOM
@@ -238,6 +251,8 @@
         const completedRemindersContent = document.getElementById('completed-reminders-content');
         const pendingRemindersList = document.getElementById('pending-reminders-list');
         const completedRemindersList = document.getElementById('completed-reminders-list');
+        const gapSubTabActive = document.getElementById('gap-sub-tab-active');
+        const gapSubTabCompleted = document.getElementById('gap-sub-tab-completed');
 
         const docRef = doc(db, "trackerData", "shared");
 
@@ -353,11 +368,22 @@
 
         const renderGapsTable = () => {
             tableBody.innerHTML = '';
-            gapsData.forEach(item => {
+            const rows = gapsData.filter(item =>
+                gapsView === 'completed' ? item.status === 'Implemented' : item.status !== 'Implemented'
+            );
+            if (rows.length === 0) {
+                const msg = gapsView === 'completed' ? 'No completed gaps yet.' : 'No active gaps. Add one above.';
+                tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-6 text-sm text-gray-500 text-center">${msg}</td></tr>`;
+                return;
+            }
+            rows.forEach(item => {
                 const row = document.createElement('tr');
                 const statusClasses = { 'In Progress': 'bg-yellow-100', 'Implemented': 'bg-green-100', 'On Hold': 'bg-blue-100', 'Not Started': 'bg-white' };
                 row.className = statusClasses[item.status] || 'bg-white';
                 const formattedAction = (item.action || '').replace(/\n/g, '<br>');
+                const actionButton = gapsView === 'completed'
+                    ? `<button class="delete-btn-gap text-red-600 hover:text-red-800 font-semibold py-1 px-3 rounded-md bg-red-100 hover:bg-red-200" data-id="${item.id}">Delete</button>`
+                    : `<button class="complete-btn-gap text-green-700 hover:text-green-900 font-semibold py-1 px-3 rounded-md bg-green-200 hover:bg-green-300" data-id="${item.id}">Complete</button>`;
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.id}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.date || 'N/A'}</td>
@@ -374,7 +400,7 @@
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-700" contenteditable="true" data-field="notes" data-id="${item.id}">${item.notes || ''}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button class="complete-btn-gap text-green-700 hover:text-green-900 font-semibold py-1 px-3 rounded-md bg-green-200 hover:bg-green-300" data-id="${item.id}">Complete</button>
+                        ${actionButton}
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -489,8 +515,17 @@
             }
         };
 
+        const switchGapsView = (view) => {
+            gapsView = view;
+            gapSubTabActive.classList.toggle('active', view === 'active');
+            gapSubTabCompleted.classList.toggle('active', view === 'completed');
+            renderGapsTable();
+        };
+
         tabGaps.addEventListener('click', () => switchTab('gaps'));
         tabReminders.addEventListener('click', () => switchTab('reminders'));
+        gapSubTabActive.addEventListener('click', () => switchGapsView('active'));
+        gapSubTabCompleted.addEventListener('click', () => switchGapsView('completed'));
         subTabPending.addEventListener('click', () => switchReminderTab('pending'));
         subTabCompleted.addEventListener('click', () => switchReminderTab('completed'));
 
@@ -629,7 +664,16 @@
             if (completeBtn) {
                 const idToUpdate = parseInt(completeBtn.dataset.id);
                 const itemToUpdate = gapsData.find(item => item.id === idToUpdate);
-                if (itemToUpdate) { itemToUpdate.status = 'Implemented'; saveDataToFirebase(); showToast('Gap marked as Implemented.'); }
+                if (itemToUpdate) { itemToUpdate.status = 'Implemented'; saveDataToFirebase(); showToast('Gap moved to Completed.'); }
+            }
+            const deleteBtn = e.target.closest('.delete-btn-gap');
+            if (deleteBtn) {
+                const idToDelete = parseInt(deleteBtn.dataset.id);
+                if (confirm('Permanently delete this completed gap?')) {
+                    gapsData = gapsData.filter(item => item.id !== idToDelete);
+                    saveDataToFirebase();
+                    showToast('Gap permanently deleted.');
+                }
             }
         });
 
@@ -658,6 +702,7 @@
 
         // Initialize view (data sync starts after sign-in via onAuthStateChanged)
         switchTab('gaps');
+        switchGapsView('active');
         switchReminderTab('pending');
     </script>
 </body>
