@@ -73,6 +73,7 @@
             <nav class="flex -mb-px space-x-4" aria-label="Tabs">
                 <button id="tab-gaps" class="tab-btn active whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Gaps Tracker</button>
                 <button id="tab-reminders" class="tab-btn whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Reminders</button>
+                <button id="tab-schedule" class="tab-btn whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Schedule</button>
             </nav>
         </div>
 
@@ -194,6 +195,18 @@
                 </div>
             </div>
         </div>
+
+        <!-- Schedule Content -->
+        <div id="schedule-content" class="hidden">
+            <div class="bg-white p-6 shadow-md rounded-lg">
+                <div class="flex items-baseline justify-between flex-wrap gap-2 mb-1">
+                    <h2 class="text-xl font-semibold text-[#0A174E]">Daily Plan</h2>
+                    <button id="clear-schedule-btn" class="text-xs font-medium px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Clear all slots</button>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">08:00 AM to 07:00 PM, half-hour slots. This schedule stays the same until you edit it.</p>
+                <div id="schedule-list" class="border border-gray-200 rounded-md divide-y divide-gray-100"></div>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -217,6 +230,7 @@
 
         let gapsData = [];
         let remindersData = [];
+        let scheduleData = {}; // { "08:00": "plan text", ... } — one fixed recurring schedule
         let currentFilter = 'All';
         let gapsView = 'active'; // 'active' = Not Started / In Progress / On Hold; 'completed' = Implemented
         let unsubscribeSnapshot = null;
@@ -253,6 +267,10 @@
         const completedRemindersList = document.getElementById('completed-reminders-list');
         const gapSubTabActive = document.getElementById('gap-sub-tab-active');
         const gapSubTabCompleted = document.getElementById('gap-sub-tab-completed');
+        const tabSchedule = document.getElementById('tab-schedule');
+        const scheduleContent = document.getElementById('schedule-content');
+        const scheduleList = document.getElementById('schedule-list');
+        const clearScheduleBtn = document.getElementById('clear-schedule-btn');
 
         const docRef = doc(db, "trackerData", "shared");
 
@@ -270,7 +288,7 @@
 
         const saveDataToFirebase = async () => {
             try {
-                await setDoc(docRef, { gaps: gapsData, reminders: remindersData });
+                await setDoc(docRef, { gaps: gapsData, reminders: remindersData, schedule: scheduleData });
             } catch (error) {
                 console.error("Error saving data to Firebase:", error);
                 showToast("Network/permission error with Firestore.", true);
@@ -323,12 +341,14 @@
                     // Seed bug fixed: once the doc exists, an empty list stays empty.
                     gapsData = data.gaps || [];
                     remindersData = data.reminders || [];
+                    scheduleData = data.schedule || {};
                     remindersData.forEach(r => { if (!r.remarks) r.remarks = []; });
                     refreshUI();
                 } else {
                     // First run only: create an empty doc. No sample data.
                     gapsData = [];
                     remindersData = [];
+                    scheduleData = {};
                     saveDataToFirebase();
                 }
             }, (error) => {
@@ -478,24 +498,63 @@
             renderList(completedReminders, completedRemindersList, true);
         };
 
+        // Fixed half-hour slots from 08:00 to 19:00 (last slot 18:30-19:00)
+        const SLOTS = (() => {
+            const pad = (n) => String(n).padStart(2, '0');
+            const fmt = (h, m) => `${pad(h)}:${pad(m)}`;
+            const arr = [];
+            for (let h = 8; h < 19; h++) {
+                for (const m of [0, 30]) {
+                    let endH = h, endM = m + 30;
+                    if (endM === 60) { endM = 0; endH = h + 1; }
+                    arr.push({ key: fmt(h, m), label: `${fmt(h, m)} – ${fmt(endH, endM)}` });
+                }
+            }
+            return arr;
+        })();
+
+        const renderSchedule = () => {
+            // Build the rows once, then only update values so typing is never interrupted.
+            if (!scheduleList.dataset.built) {
+                scheduleList.innerHTML = SLOTS.map(slot => `
+                    <div class="flex items-center gap-3 px-3 py-2">
+                        <div class="w-32 shrink-0 text-sm font-medium text-[#0A174E]">${slot.label}</div>
+                        <input type="text" class="schedule-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" data-slot="${slot.key}" placeholder="Add a plan...">
+                    </div>
+                `).join('');
+                scheduleList.dataset.built = '1';
+            }
+            scheduleList.querySelectorAll('.schedule-input').forEach(inp => {
+                if (document.activeElement !== inp) {
+                    inp.value = scheduleData[inp.dataset.slot] || '';
+                }
+            });
+        };
+
         const refreshUI = () => {
             renderGapsDashboard();
             renderGapsTable();
             renderRemindersDashboard();
             renderReminders();
+            renderSchedule();
         };
 
         const switchTab = (tab) => {
+            gapsContent.classList.add('hidden');
+            remindersContent.classList.add('hidden');
+            scheduleContent.classList.add('hidden');
+            tabGaps.classList.remove('active');
+            tabReminders.classList.remove('active');
+            tabSchedule.classList.remove('active');
             if (tab === 'gaps') {
                 gapsContent.classList.remove('hidden');
-                remindersContent.classList.add('hidden');
                 tabGaps.classList.add('active');
-                tabReminders.classList.remove('active');
             } else if (tab === 'reminders') {
-                gapsContent.classList.add('hidden');
                 remindersContent.classList.remove('hidden');
-                tabGaps.classList.remove('active');
                 tabReminders.classList.add('active');
+            } else if (tab === 'schedule') {
+                scheduleContent.classList.remove('hidden');
+                tabSchedule.classList.add('active');
             }
         };
 
@@ -524,10 +583,31 @@
 
         tabGaps.addEventListener('click', () => switchTab('gaps'));
         tabReminders.addEventListener('click', () => switchTab('reminders'));
+        tabSchedule.addEventListener('click', () => switchTab('schedule'));
         gapSubTabActive.addEventListener('click', () => switchGapsView('active'));
         gapSubTabCompleted.addEventListener('click', () => switchGapsView('completed'));
         subTabPending.addEventListener('click', () => switchReminderTab('pending'));
         subTabCompleted.addEventListener('click', () => switchReminderTab('completed'));
+
+        // Schedule: save a slot as you type (debounced), remove empty ones
+        scheduleList.addEventListener('input', (e) => {
+            if (e.target.classList.contains('schedule-input')) {
+                const slot = e.target.dataset.slot;
+                const val = e.target.value;
+                if (val.trim()) { scheduleData[slot] = val; } else { delete scheduleData[slot]; }
+                clearTimeout(e.target.saveTimeout);
+                e.target.saveTimeout = setTimeout(saveDataToFirebase, 600);
+            }
+        });
+
+        clearScheduleBtn.addEventListener('click', () => {
+            if (confirm('Clear the text in every time slot? This cannot be undone.')) {
+                scheduleData = {};
+                scheduleList.querySelectorAll('.schedule-input').forEach(inp => { inp.value = ''; });
+                saveDataToFirebase();
+                showToast('Schedule cleared.');
+            }
+        });
 
         emailBtn.addEventListener('click', () => {
             let body = `<p>Dear Team,</p><p>Please find below an update on our current operational gaps and corrective actions.</p><br><table style="width:100%; border-collapse: collapse; font-family: sans-serif;"><thead style="background-color: #f2f2f2;"><tr><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Gap</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Action</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Owner</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Status</th></tr></thead><tbody>`;
