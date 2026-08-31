@@ -74,6 +74,7 @@
                 <button id="tab-gaps" class="tab-btn active whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Gaps Tracker</button>
                 <button id="tab-reminders" class="tab-btn whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Reminders</button>
                 <button id="tab-schedule" class="tab-btn whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Schedule</button>
+                <button id="tab-templates" class="tab-btn whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Templates</button>
             </nav>
         </div>
 
@@ -207,6 +208,27 @@
                 <div id="schedule-list" class="border border-gray-200 rounded-md divide-y divide-gray-100"></div>
             </div>
         </div>
+
+        <!-- Templates Content -->
+        <div id="templates-content" class="hidden">
+            <div class="bg-white p-6 shadow-md rounded-lg mb-8">
+                <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Add Template</h2>
+                <form id="add-template-form" class="space-y-4">
+                    <div>
+                        <label for="new-template-title" class="block text-sm font-medium text-gray-700">Title</label>
+                        <input type="text" id="new-template-title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Delay notification email" required>
+                    </div>
+                    <div>
+                        <label for="new-template-body" class="block text-sm font-medium text-gray-700">Text</label>
+                        <div id="new-template-body" contenteditable="true" class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-1 focus:ring-[#F5D042] sm:text-sm px-3 py-2 min-h-[8rem] bg-white overflow-auto focus:outline-none" placeholder="Paste or type the template text. Formatting is kept."></div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0A174E] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F5D042]">Add Template</button>
+                    </div>
+                </form>
+            </div>
+            <div id="templates-list" class="space-y-4"></div>
+        </div>
     </div>
 
     <script type="module">
@@ -231,6 +253,8 @@
         let gapsData = [];
         let remindersData = [];
         let scheduleData = {}; // { "08:00": "plan text", ... } — one fixed recurring schedule
+        let templatesData = []; // [{ id, title, body }]
+        let renderedTemplateSig = '';
         let currentFilter = 'All';
         let gapsView = 'active'; // 'active' = Not Started / In Progress / On Hold; 'completed' = Implemented
         let unsubscribeSnapshot = null;
@@ -271,6 +295,10 @@
         const scheduleContent = document.getElementById('schedule-content');
         const scheduleList = document.getElementById('schedule-list');
         const clearScheduleBtn = document.getElementById('clear-schedule-btn');
+        const tabTemplates = document.getElementById('tab-templates');
+        const templatesContent = document.getElementById('templates-content');
+        const templatesList = document.getElementById('templates-list');
+        const addTemplateForm = document.getElementById('add-template-form');
 
         const docRef = doc(db, "trackerData", "shared");
 
@@ -288,7 +316,7 @@
 
         const saveDataToFirebase = async () => {
             try {
-                await setDoc(docRef, { gaps: gapsData, reminders: remindersData, schedule: scheduleData });
+                await setDoc(docRef, { gaps: gapsData, reminders: remindersData, schedule: scheduleData, templates: templatesData });
             } catch (error) {
                 console.error("Error saving data to Firebase:", error);
                 showToast("Network/permission error with Firestore.", true);
@@ -342,6 +370,7 @@
                     gapsData = data.gaps || [];
                     remindersData = data.reminders || [];
                     scheduleData = data.schedule || {};
+                    templatesData = data.templates || [];
                     remindersData.forEach(r => { if (!r.remarks) r.remarks = []; });
                     refreshUI();
                 } else {
@@ -349,6 +378,7 @@
                     gapsData = [];
                     remindersData = [];
                     scheduleData = {};
+                    templatesData = [];
                     saveDataToFirebase();
                 }
             }, (error) => {
@@ -531,21 +561,58 @@
             });
         };
 
+        const renderTemplates = () => {
+            // Rebuild only when the set of templates changes, so editing is never interrupted.
+            const sig = templatesData.map(t => t.id).join(',');
+            if (sig !== renderedTemplateSig) {
+                if (templatesData.length === 0) {
+                    templatesList.innerHTML = `<p class="text-gray-500 p-4 bg-white rounded-md shadow-sm">No templates yet. Add one above.</p>`;
+                } else {
+                    templatesList.innerHTML = templatesData.map(t => `
+                        <div class="bg-white p-4 rounded-md shadow-sm" data-id="${t.id}">
+                            <div class="flex items-center gap-2 mb-2">
+                                <input type="text" class="template-title flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm font-medium text-[#0A174E]" data-id="${t.id}" placeholder="Template title">
+                                <button class="copy-template text-xs font-medium px-3 py-1.5 rounded-md bg-[#F5D042] text-[#0A174E] hover:bg-opacity-90" data-id="${t.id}">Copy</button>
+                                <button class="delete-template text-xs font-medium px-3 py-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200" data-id="${t.id}">Delete</button>
+                            </div>
+                            <div contenteditable="true" class="template-body w-full rounded-md border border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-1 focus:ring-[#F5D042] text-sm px-3 py-2 min-h-[8rem] bg-white overflow-auto focus:outline-none" data-id="${t.id}" placeholder="Template text..."></div>
+                        </div>
+                    `).join('');
+                }
+                renderedTemplateSig = sig;
+            }
+            templatesList.querySelectorAll('.template-title').forEach(inp => {
+                if (document.activeElement !== inp) {
+                    const t = templatesData.find(x => x.id === parseInt(inp.dataset.id));
+                    inp.value = t ? (t.title || '') : '';
+                }
+            });
+            templatesList.querySelectorAll('.template-body').forEach(el => {
+                if (document.activeElement !== el) {
+                    const t = templatesData.find(x => x.id === parseInt(el.dataset.id));
+                    el.innerHTML = t ? (t.body || '') : '';
+                }
+            });
+        };
+
         const refreshUI = () => {
             renderGapsDashboard();
             renderGapsTable();
             renderRemindersDashboard();
             renderReminders();
             renderSchedule();
+            renderTemplates();
         };
 
         const switchTab = (tab) => {
             gapsContent.classList.add('hidden');
             remindersContent.classList.add('hidden');
             scheduleContent.classList.add('hidden');
+            templatesContent.classList.add('hidden');
             tabGaps.classList.remove('active');
             tabReminders.classList.remove('active');
             tabSchedule.classList.remove('active');
+            tabTemplates.classList.remove('active');
             if (tab === 'gaps') {
                 gapsContent.classList.remove('hidden');
                 tabGaps.classList.add('active');
@@ -555,6 +622,9 @@
             } else if (tab === 'schedule') {
                 scheduleContent.classList.remove('hidden');
                 tabSchedule.classList.add('active');
+            } else if (tab === 'templates') {
+                templatesContent.classList.remove('hidden');
+                tabTemplates.classList.add('active');
             }
         };
 
@@ -584,6 +654,7 @@
         tabGaps.addEventListener('click', () => switchTab('gaps'));
         tabReminders.addEventListener('click', () => switchTab('reminders'));
         tabSchedule.addEventListener('click', () => switchTab('schedule'));
+        tabTemplates.addEventListener('click', () => switchTab('templates'));
         gapSubTabActive.addEventListener('click', () => switchGapsView('active'));
         gapSubTabCompleted.addEventListener('click', () => switchGapsView('completed'));
         subTabPending.addEventListener('click', () => switchReminderTab('pending'));
@@ -606,6 +677,79 @@
                 scheduleList.querySelectorAll('.schedule-input').forEach(inp => { inp.value = ''; });
                 saveDataToFirebase();
                 showToast('Schedule cleared.');
+            }
+        });
+
+        // Copy HTML (with a plain-text fallback for apps that ignore formatting)
+        const copyHtml = async (html) => {
+            const plain = (html || '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li|tr|h[1-6])>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+            try {
+                if (navigator.clipboard && window.ClipboardItem) {
+                    await navigator.clipboard.write([new ClipboardItem({
+                        'text/html': new Blob([html || ''], { type: 'text/html' }),
+                        'text/plain': new Blob([plain], { type: 'text/plain' })
+                    })]);
+                    showToast('Template copied with formatting.');
+                    return;
+                }
+                throw new Error('ClipboardItem unavailable');
+            } catch (err) {
+                const listener = (e) => {
+                    e.clipboardData.setData('text/html', html || '');
+                    e.clipboardData.setData('text/plain', plain);
+                    e.preventDefault();
+                };
+                document.addEventListener('copy', listener);
+                try { document.execCommand('copy'); showToast('Template copied with formatting.'); }
+                catch (e2) { showToast('Could not copy. Select the text manually.', true); }
+                finally { document.removeEventListener('copy', listener); }
+            }
+        };
+
+        // Templates: add
+        addTemplateForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('new-template-title').value.trim();
+            const bodyEl = document.getElementById('new-template-body');
+            const body = bodyEl.innerHTML.trim();
+            if (!title) return;
+            const newId = templatesData.length > 0 ? Math.max(...templatesData.map(t => t.id)) + 1 : 1;
+            templatesData.push({ id: newId, title: title, body: body });
+            saveDataToFirebase();
+            document.getElementById('new-template-title').value = '';
+            bodyEl.innerHTML = '';
+            showToast('Template added.');
+        });
+
+        // Templates: copy and delete
+        templatesList.addEventListener('click', (e) => {
+            const copyBtn = e.target.closest('.copy-template');
+            if (copyBtn) {
+                const t = templatesData.find(x => x.id === parseInt(copyBtn.dataset.id));
+                if (t) copyHtml(t.body || '');
+            }
+            const delBtn = e.target.closest('.delete-template');
+            if (delBtn) {
+                const idToDelete = parseInt(delBtn.dataset.id);
+                if (confirm('Delete this template?')) {
+                    templatesData = templatesData.filter(x => x.id !== idToDelete);
+                    saveDataToFirebase();
+                    showToast('Template deleted.');
+                }
+            }
+        });
+
+        // Templates: edit title or body (debounced save)
+        templatesList.addEventListener('input', (e) => {
+            const titleInput = e.target.classList.contains('template-title');
+            const bodyInput = e.target.classList.contains('template-body');
+            if (titleInput || bodyInput) {
+                const t = templatesData.find(x => x.id === parseInt(e.target.dataset.id));
+                if (t) {
+                    if (titleInput) { t.title = e.target.value; } else { t.body = e.target.innerHTML; }
+                    clearTimeout(e.target.saveTimeout);
+                    e.target.saveTimeout = setTimeout(saveDataToFirebase, 600);
+                }
             }
         });
 
