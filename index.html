@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My daily tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        [contenteditable=true]:empty:before {
+            content: attr(placeholder);
+            pointer-events: none;
+            display: block;
+            color: #9ca3af;
+        }
+        .toast {
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        .tab-btn.active { background-color: #0A174E; color: white; }
+        .tab-btn:not(.active) { background-color: #e5e7eb; color: #4b5563; }
+        .sub-tab-btn.active { border-color: #0A174E; color: #0A174E; border-bottom-width: 2px; }
+        .sub-tab-btn:not(.active) { border-color: transparent; color: #6b7280; }
+        .filter-btn.active { background-color: #0A174E; color: white; }
+        .filter-btn:not(.active) { background-color: white; color: #4b5563; }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8">
+
+    <!-- Notification Area (always present, outside the auth gate) -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="hidden min-h-[70vh] flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-md text-center max-w-sm w-full">
+            <h1 class="text-2xl font-bold text-[#0A174E] mb-2">My daily tracker</h1>
+            <p class="text-gray-600 mb-6">Sign in to access your data.</p>
+            <button id="sign-in-btn" class="w-full inline-flex justify-center items-center gap-2 py-2.5 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0A174E]">
+                <svg class="h-5 w-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Sign in with Google
+            </button>
+        </div>
+    </div>
+
+    <!-- Main App (hidden until signed in) -->
+    <div id="app-container" class="hidden max-w-7xl mx-auto">
+        <header class="mb-6">
+            <div class="flex justify-between items-start gap-4 flex-wrap">
+                <div>
+                    <h1 class="text-3xl font-bold text-[#0A174E]">My daily tracker</h1>
+                    <p class="text-lg text-gray-600">Gaps &amp; Reminders</p>
+                </div>
+                <div class="text-right">
+                    <p id="user-email" class="text-sm text-gray-600"></p>
+                    <button id="sign-out-btn" class="mt-1 text-sm font-medium text-[#0A174E] hover:underline">Sign out</button>
+                </div>
+            </div>
+            <!-- One-time setup helper: your UID for the Firestore rule -->
+            <div id="uid-banner" class="mt-3 bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-gray-700 flex items-center justify-between gap-3 flex-wrap">
+                <span>Your account ID (for the Firestore rule): <code id="uid-value" class="font-mono text-[#0A174E] break-all"></code></span>
+                <div class="flex items-center gap-2">
+                    <button id="copy-uid-btn" class="text-xs font-medium px-3 py-1 rounded-md bg-[#0A174E] text-white hover:bg-opacity-90">Copy ID</button>
+                    <button id="hide-uid-btn" class="text-xs font-medium px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Hide</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Tab Navigation -->
+        <div class="mb-6 border-b border-gray-200">
+            <nav class="flex -mb-px space-x-4" aria-label="Tabs">
+                <button id="tab-gaps" class="tab-btn active whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Gaps Tracker</button>
+                <button id="tab-reminders" class="tab-btn whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Reminders</button>
+            </nav>
+        </div>
+
+        <!-- Gaps Tracker Content -->
+        <div id="gaps-content">
+            <div id="dashboard" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8"></div>
+            <div class="flex flex-wrap gap-4 mb-6">
+                 <button id="email-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm bg-[#F5D042] text-[#0A174E] font-semibold hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0A174E]">Copy Gaps Report</button>
+            </div>
+            <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Date Identified</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Identified Gap</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Corrective Action(s)</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Owner/Team</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Notes / Next Steps</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tracker-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+            <div class="mt-10 bg-white p-6 shadow-md rounded-lg">
+                <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Add New Gap</h2>
+                <form id="add-gap-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label for="new-gap" class="block text-sm font-medium text-gray-700">Identified Gap</label>
+                        <input type="text" id="new-gap" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Gaps in performance" required>
+                    </div>
+                    <div>
+                        <label for="new-action" class="block text-sm font-medium text-gray-700">Corrective Action(s)</label>
+                        <textarea id="new-action" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Restructure routes..." required></textarea>
+                    </div>
+                    <div>
+                        <label for="new-owner" class="block text-sm font-medium text-gray-700">Owner/Team</label>
+                        <input type="text" id="new-owner" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Operations Team">
+                    </div>
+                    <div class="md:col-span-2 lg:col-span-3 flex justify-end">
+                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0A174E] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F5D042]">Add Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Reminders Content -->
+        <div id="reminders-content" class="hidden">
+            <div id="reminders-dashboard" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
+            <div class="bg-white p-6 shadow-md rounded-lg">
+                <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Add New Reminder</h2>
+                <form id="add-reminder-form" class="space-y-4">
+                    <div>
+                        <label for="new-reminder-text" class="block text-sm font-medium text-gray-700">Reminder</label>
+                        <input type="text" id="new-reminder-text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Follow up with the warehouse team" required>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="new-reminder-priority" class="block text-sm font-medium text-gray-700">Priority</label>
+                            <select id="new-reminder-priority" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Category</label>
+                            <div class="mt-2 flex space-x-4">
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="reminder-category" value="shipment" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300" checked>
+                                    <span class="ml-2">Shipment Related</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="reminder-category" value="clerical" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300">
+                                    <span class="ml-2">Clerical</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0A174E] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F5D042]">Add Reminder</button>
+                    </div>
+                </form>
+            </div>
+            <div class="mt-10">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button id="sub-tab-pending" class="sub-tab-btn active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Pending</button>
+                        <button id="sub-tab-completed" class="sub-tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Completed</button>
+                    </nav>
+                </div>
+                <div id="filter-container" class="mt-4">
+                    <div class="flex space-x-2">
+                        <button class="filter-btn active px-3 py-1 text-sm font-medium rounded-md shadow-sm border border-gray-300" data-filter="All">All</button>
+                        <button class="filter-btn px-3 py-1 text-sm font-medium rounded-md shadow-sm border border-gray-300" data-filter="High">High</button>
+                        <button class="filter-btn px-3 py-1 text-sm font-medium rounded-md shadow-sm border border-gray-300" data-filter="Medium">Medium</button>
+                        <button class="filter-btn px-3 py-1 text-sm font-medium rounded-md shadow-sm border border-gray-300" data-filter="Low">Low</button>
+                    </div>
+                </div>
+                <div id="pending-reminders-content" class="mt-6">
+                    <ul id="pending-reminders-list" class="space-y-3"></ul>
+                </div>
+                <div id="completed-reminders-content" class="hidden mt-6">
+                    <ul id="completed-reminders-list" class="space-y-3"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyArAQr5Xstfpp-3zblOsIqIjgrv-Sfk_50",
+            authDomain: "my-daily-tracker-6be0e.firebaseapp.com",
+            projectId: "my-daily-tracker-6be0e",
+            storageBucket: "my-daily-tracker-6be0e.appspot.com",
+            messagingSenderId: "739212705782",
+            appId: "1:739212705782:web:a8103d2706288b358f11d7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        let gapsData = [];
+        let remindersData = [];
+        let currentFilter = 'All';
+        let unsubscribeSnapshot = null;
+
+        // Auth DOM
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const signInBtn = document.getElementById('sign-in-btn');
+        const signOutBtn = document.getElementById('sign-out-btn');
+        const userEmailEl = document.getElementById('user-email');
+        const uidValueEl = document.getElementById('uid-value');
+        const uidBanner = document.getElementById('uid-banner');
+        const copyUidBtn = document.getElementById('copy-uid-btn');
+        const hideUidBtn = document.getElementById('hide-uid-btn');
+
+        // App DOM
+        const tabGaps = document.getElementById('tab-gaps');
+        const tabReminders = document.getElementById('tab-reminders');
+        const gapsContent = document.getElementById('gaps-content');
+        const remindersContent = document.getElementById('reminders-content');
+        const tableBody = document.getElementById('tracker-table-body');
+        const addGapForm = document.getElementById('add-gap-form');
+        const emailBtn = document.getElementById('email-btn');
+        const toastContainer = document.getElementById('toast-container');
+        const dashboard = document.getElementById('dashboard');
+        const remindersDashboard = document.getElementById('reminders-dashboard');
+        const addReminderForm = document.getElementById('add-reminder-form');
+        const filterContainer = document.getElementById('filter-container');
+        const subTabPending = document.getElementById('sub-tab-pending');
+        const subTabCompleted = document.getElementById('sub-tab-completed');
+        const pendingRemindersContent = document.getElementById('pending-reminders-content');
+        const completedRemindersContent = document.getElementById('completed-reminders-content');
+        const pendingRemindersList = document.getElementById('pending-reminders-list');
+        const completedRemindersList = document.getElementById('completed-reminders-list');
+
+        const docRef = doc(db, "trackerData", "shared");
+
+        const showToast = (message, isError = false) => {
+            const toast = document.createElement('div');
+            toast.className = `toast max-w-xs w-full p-4 rounded-md shadow-lg text-white ${isError ? 'bg-red-500' : 'bg-[#0A174E]'}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px)';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        };
+
+        const saveDataToFirebase = async () => {
+            try {
+                await setDoc(docRef, { gaps: gapsData, reminders: remindersData });
+            } catch (error) {
+                console.error("Error saving data to Firebase:", error);
+                showToast("Network/permission error with Firestore.", true);
+            }
+        };
+
+        // ---------- AUTH ----------
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                userEmailEl.textContent = user.email || '';
+                uidValueEl.textContent = user.uid;
+                startDataSync();
+            } else {
+                appContainer.classList.add('hidden');
+                loginScreen.classList.remove('hidden');
+                if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+            }
+        });
+
+        signInBtn.addEventListener('click', async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (e) {
+                console.error(e);
+                showToast('Sign-in failed: ' + e.message, true);
+            }
+        });
+
+        signOutBtn.addEventListener('click', () => signOut(auth));
+
+        copyUidBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(uidValueEl.textContent);
+                showToast('Account ID copied.');
+            } catch (e) {
+                showToast('Could not copy. Select the ID manually.', true);
+            }
+        });
+
+        hideUidBtn.addEventListener('click', () => uidBanner.classList.add('hidden'));
+
+        // ---------- DATA SYNC ----------
+        const startDataSync = () => {
+            if (unsubscribeSnapshot) return;
+            unsubscribeSnapshot = onSnapshot(docRef, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const data = docSnapshot.data();
+                    // Seed bug fixed: once the doc exists, an empty list stays empty.
+                    gapsData = data.gaps || [];
+                    remindersData = data.reminders || [];
+                    remindersData.forEach(r => { if (!r.remarks) r.remarks = []; });
+                    refreshUI();
+                } else {
+                    // First run only: create an empty doc. No sample data.
+                    gapsData = [];
+                    remindersData = [];
+                    saveDataToFirebase();
+                }
+            }, (error) => {
+                console.error("Firestore snapshot error:", error);
+                showToast("Network/permission error with Firestore.", true);
+            });
+        };
+
+        // ---------- RENDER ----------
+        const renderGapsDashboard = () => {
+            const total = gapsData.length;
+            const notStarted = gapsData.filter(item => item.status === 'Not Started').length;
+            const inProgress = gapsData.filter(item => item.status === 'In Progress').length;
+            const implemented = gapsData.filter(item => item.status === 'Implemented').length;
+            const onHold = gapsData.filter(item => item.status === 'On Hold').length;
+            dashboard.innerHTML = `
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-gray-500">Total Gaps</p><p class="text-3xl font-bold text-[#0A174E]">${total}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-gray-500">Not Started</p><p class="text-3xl font-bold text-[#0A174E]">${notStarted}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-yellow-600">In Progress</p><p class="text-3xl font-bold text-[#0A174E]">${inProgress}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-green-600">Implemented</p><p class="text-3xl font-bold text-[#0A174E]">${implemented}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-blue-600">On Hold</p><p class="text-3xl font-bold text-[#0A174E]">${onHold}</p></div>
+            `;
+        };
+
+        const renderRemindersDashboard = () => {
+            const pending = remindersData.filter(r => r.status === 'pending');
+            const high = pending.filter(r => r.priority === 'High').length;
+            const medium = pending.filter(r => r.priority === 'Medium').length;
+            const low = pending.filter(r => r.priority === 'Low').length;
+            remindersDashboard.innerHTML = `
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-gray-500">Pending</p><p class="text-3xl font-bold text-[#0A174E]">${pending.length}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-red-500">High Priority</p><p class="text-3xl font-bold text-[#0A174E]">${high}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-yellow-500">Medium Priority</p><p class="text-3xl font-bold text-[#0A174E]">${medium}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-green-500">Low Priority</p><p class="text-3xl font-bold text-[#0A174E]">${low}</p></div>
+            `;
+        };
+
+        const renderGapsTable = () => {
+            tableBody.innerHTML = '';
+            gapsData.forEach(item => {
+                const row = document.createElement('tr');
+                const statusClasses = { 'In Progress': 'bg-yellow-100', 'Implemented': 'bg-green-100', 'On Hold': 'bg-blue-100', 'Not Started': 'bg-white' };
+                row.className = statusClasses[item.status] || 'bg-white';
+                const formattedAction = (item.action || '').replace(/\n/g, '<br>');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.date || 'N/A'}</td>
+                    <td class="px-6 py-4 text-sm text-gray-700" contenteditable="true" data-field="gap" data-id="${item.id}">${item.gap || ''}</td>
+                    <td class="px-6 py-4 text-sm text-gray-700" contenteditable="true" data-field="action" data-id="${item.id}">${formattedAction}</td>
+                    <td class="px-6 py-4 text-sm text-gray-700" contenteditable="true" data-field="owner" data-id="${item.id}">${item.owner || ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <select class="status-select rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring focus:ring-[#F5D042] focus:ring-opacity-50" data-id="${item.id}">
+                            <option value="Not Started" ${item.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                            <option value="In Progress" ${item.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="Implemented" ${item.status === 'Implemented' ? 'selected' : ''}>Implemented</option>
+                            <option value="On Hold" ${item.status === 'On Hold' ? 'selected' : ''}>On Hold</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-700" contenteditable="true" data-field="notes" data-id="${item.id}">${item.notes || ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button class="complete-btn-gap text-green-700 hover:text-green-900 font-semibold py-1 px-3 rounded-md bg-green-200 hover:bg-green-300" data-id="${item.id}">Complete</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        };
+
+        const renderReminders = () => {
+            let pendingReminders = remindersData.filter(r => r.status === 'pending');
+            const completedReminders = remindersData.filter(r => r.status === 'completed');
+            if (currentFilter !== 'All') {
+                pendingReminders = pendingReminders.filter(r => r.priority === currentFilter);
+            }
+            const renderList = (list, element, isCompletedList = false) => {
+                element.innerHTML = '';
+                if (list.length === 0) {
+                    element.innerHTML = `<li class="text-gray-500 p-4 bg-white rounded-md shadow-sm">No reminders found in this view.</li>`;
+                    return;
+                }
+                list.forEach(reminder => {
+                    const priorityClasses = { High: 'border-red-500', Medium: 'border-yellow-500', Low: 'border-green-500' };
+                    const priorityBadgeClasses = { High: 'bg-red-100 text-red-800', Medium: 'bg-yellow-100 text-yellow-800', Low: 'bg-green-100 text-green-800' };
+                    const li = document.createElement('li');
+                    li.className = `bg-white p-4 rounded-md shadow-sm border-l-4 ${isCompletedList ? 'border-gray-400' : priorityClasses[reminder.priority] || 'border-gray-300'}`;
+                    let actionButtons;
+                    if (isCompletedList) {
+                        actionButtons = `
+                        <button class="delete-btn-reminder text-red-500 hover:text-red-800 p-1" data-id="${reminder.id}" title="Permanently Delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" />
+                            </svg>
+                        </button>`;
+                    } else {
+                        actionButtons = `
+                        <div class="flex items-center space-x-2">
+                            <button class="email-btn-reminder text-blue-600 hover:text-blue-800 p-1" data-id="${reminder.id}" title="Copy for Email">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                                </svg>
+                            </button>
+                            <button class="escalate-btn-reminder text-yellow-700 hover:text-yellow-900 font-medium text-xs py-1 px-2.5 rounded-md bg-yellow-100 hover:bg-yellow-200" data-id="${reminder.id}">Escalate</button>
+                            <button class="complete-btn-reminder text-green-700 hover:text-green-900 font-medium text-xs py-1 px-2.5 rounded-md bg-green-100 hover:bg-green-200" data-id="${reminder.id}">Complete</button>
+                        </div>`;
+                    }
+                    const remarksHtml = (reminder.remarks || []).map(remark => `
+                        <li class="text-xs text-gray-600 mt-1 pl-2 border-l-2 border-gray-300">
+                            <span class="font-medium text-gray-700">${new Date(remark.timestamp).toLocaleString()}</span>: ${remark.text}
+                        </li>
+                    `).join('');
+                    const addRemarkFormHtml = `
+                        <form class="add-remark-form mt-2 flex gap-2" data-id="${reminder.id}">
+                            <input type="text" class="remark-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-xs" placeholder="Add a status remark..." required>
+                            <button type="submit" class="text-xs font-medium px-3 py-1 border border-transparent rounded-md shadow-sm text-white bg-[#0A174E] hover:bg-opacity-90">Add</button>
+                        </form>
+                    `;
+                    li.innerHTML = `
+                        <div class="w-full">
+                            <div class="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-2">
+                                <div>
+                                    <span class="text-gray-800 ${isCompletedList ? 'line-through text-gray-500' : 'font-medium'}">${reminder.text}</span>
+                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isCompletedList ? 'bg-gray-100 text-gray-800' : priorityBadgeClasses[reminder.priority]}">${reminder.priority}</span>
+                                    <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">${reminder.category || 'general'}</span>
+                                </div>
+                                ${actionButtons}
+                            </div>
+                            <div class="remarks-section mt-3 pt-2 border-t border-gray-100">
+                                <ul class="remarks-list space-y-1">${remarksHtml}</ul>
+                                ${!isCompletedList ? addRemarkFormHtml : ''}
+                            </div>
+                        </div>`;
+                    element.appendChild(li);
+                });
+            };
+            renderList(pendingReminders, pendingRemindersList);
+            renderList(completedReminders, completedRemindersList, true);
+        };
+
+        const refreshUI = () => {
+            renderGapsDashboard();
+            renderGapsTable();
+            renderRemindersDashboard();
+            renderReminders();
+        };
+
+        const switchTab = (tab) => {
+            if (tab === 'gaps') {
+                gapsContent.classList.remove('hidden');
+                remindersContent.classList.add('hidden');
+                tabGaps.classList.add('active');
+                tabReminders.classList.remove('active');
+            } else if (tab === 'reminders') {
+                gapsContent.classList.add('hidden');
+                remindersContent.classList.remove('hidden');
+                tabGaps.classList.remove('active');
+                tabReminders.classList.add('active');
+            }
+        };
+
+        const switchReminderTab = (tab) => {
+            pendingRemindersContent.classList.add('hidden');
+            completedRemindersContent.classList.add('hidden');
+            subTabPending.classList.remove('active');
+            subTabCompleted.classList.remove('active');
+            filterContainer.classList.add('hidden');
+            if (tab === 'pending') {
+                pendingRemindersContent.classList.remove('hidden');
+                subTabPending.classList.add('active');
+                filterContainer.classList.remove('hidden');
+            } else if (tab === 'completed') {
+                completedRemindersContent.classList.remove('hidden');
+                subTabCompleted.classList.add('active');
+            }
+        };
+
+        tabGaps.addEventListener('click', () => switchTab('gaps'));
+        tabReminders.addEventListener('click', () => switchTab('reminders'));
+        subTabPending.addEventListener('click', () => switchReminderTab('pending'));
+        subTabCompleted.addEventListener('click', () => switchReminderTab('completed'));
+
+        emailBtn.addEventListener('click', () => {
+            let body = `<p>Dear Team,</p><p>Please find below an update on our current operational gaps and corrective actions.</p><br><table style="width:100%; border-collapse: collapse; font-family: sans-serif;"><thead style="background-color: #f2f2f2;"><tr><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Gap</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Action</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Owner</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Status</th></tr></thead><tbody>`;
+            gapsData.forEach(item => {
+                body += `<tr><td style="border: 1px solid #ddd; padding: 8px;">${item.gap}</td><td style="border: 1px solid #ddd; padding: 8px;">${(item.action || '').replace(/\n/g, '<br>')}</td><td style="border: 1px solid #ddd; padding: 8px;">${item.owner}</td><td style="border: 1px solid #ddd; padding: 8px;">${item.status}</td></tr>`;
+            });
+            body += `</tbody></table><br><p>Best regards,</p><p>[Your Name]</p>`;
+            const listener = (e) => {
+                e.clipboardData.setData('text/html', body);
+                e.clipboardData.setData('text/plain', body.replace(/<[^>]*>/g, ''));
+                e.preventDefault();
+            };
+            document.addEventListener('copy', listener);
+            try {
+                document.execCommand('copy');
+                showToast('Gaps report copied! Paste it directly into your email.');
+            } catch (err) {
+                showToast('Failed to copy email content.', true);
+            } finally {
+                document.removeEventListener('copy', listener);
+            }
+        });
+
+        addGapForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newId = gapsData.length > 0 ? Math.max(...gapsData.map(item => item.id)) + 1 : 1;
+            const today = new Date().toISOString().split('T')[0];
+            gapsData.push({ id: newId, date: today, gap: document.getElementById('new-gap').value, action: document.getElementById('new-action').value, owner: document.getElementById('new-owner').value, status: 'Not Started', notes: '' });
+            saveDataToFirebase();
+            addGapForm.reset();
+            showToast('New gap item added successfully!');
+        });
+
+        addReminderForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const reminderText = document.getElementById('new-reminder-text').value;
+            const priority = document.getElementById('new-reminder-priority').value;
+            const category = document.querySelector('input[name="reminder-category"]:checked').value;
+            if (reminderText) {
+                const newId = remindersData.length > 0 ? Math.max(...remindersData.map(r => r.id)) + 1 : 1;
+                remindersData.push({ id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [] });
+                saveDataToFirebase();
+                addReminderForm.reset();
+                showToast('Reminder added!');
+            }
+        });
+
+        document.getElementById('reminders-content').addEventListener('submit', (e) => {
+            if (e.target.classList.contains('add-remark-form')) {
+                e.preventDefault();
+                const form = e.target;
+                const id = parseInt(form.dataset.id);
+                const input = form.querySelector('.remark-input');
+                const remarkText = input.value.trim();
+                if (remarkText) {
+                    const reminder = remindersData.find(r => r.id === id);
+                    if (reminder) {
+                        if (!reminder.remarks) reminder.remarks = [];
+                        reminder.remarks.push({ text: remarkText, timestamp: new Date().toISOString() });
+                        saveDataToFirebase();
+                        showToast('Remark added.');
+                    }
+                }
+            }
+        });
+
+        document.getElementById('reminders-content').addEventListener('click', (e) => {
+            const completeBtn = e.target.closest('.complete-btn-reminder');
+            if (completeBtn) {
+                const idToComplete = parseInt(completeBtn.dataset.id);
+                const reminder = remindersData.find(r => r.id === idToComplete);
+                if (reminder) { reminder.status = 'completed'; saveDataToFirebase(); showToast('Reminder marked as complete.'); }
+            }
+            const deleteBtn = e.target.closest('.delete-btn-reminder');
+            if (deleteBtn) {
+                const idToDelete = parseInt(deleteBtn.dataset.id);
+                if (confirm('Are you sure you want to permanently delete this reminder?')) {
+                    remindersData = remindersData.filter(r => r.id !== idToDelete);
+                    saveDataToFirebase();
+                    showToast('Reminder permanently deleted.');
+                }
+            }
+            const escalateBtn = e.target.closest('.escalate-btn-reminder');
+            if (escalateBtn) {
+                const idToEscalate = parseInt(escalateBtn.dataset.id);
+                const reminderIndex = remindersData.findIndex(r => r.id === idToEscalate);
+                if (reminderIndex > -1) {
+                    const reminder = remindersData[reminderIndex];
+                    const newGapId = gapsData.length > 0 ? Math.max(...gapsData.map(item => item.id)) + 1 : 1;
+                    const today = new Date().toISOString().split('T')[0];
+                    gapsData.push({ id: newGapId, date: today, gap: reminder.text, action: '', owner: '', status: 'Not Started', notes: `Escalated from a ${reminder.priority} priority reminder.` });
+                    remindersData.splice(reminderIndex, 1);
+                    saveDataToFirebase();
+                    showToast('Reminder escalated to a Gap.');
+                }
+            }
+            const emailReminderBtn = e.target.closest('.email-btn-reminder');
+            if (emailReminderBtn) {
+                const idToEmail = parseInt(emailReminderBtn.dataset.id);
+                const reminder = remindersData.find(r => r.id === idToEmail);
+                if (reminder) {
+                    const subject = `Reminder: ${reminder.text}`;
+                    const body = `This is a reminder regarding the following task:\n\n${reminder.text}\n\nPriority: ${reminder.priority}`;
+                    const tempTextArea = document.createElement('textarea');
+                    tempTextArea.value = `Subject: ${subject}\n\n${body}`;
+                    document.body.appendChild(tempTextArea);
+                    tempTextArea.select();
+                    try {
+                        document.execCommand('copy');
+                        showToast('Email subject & body copied! Paste it into your email client.');
+                        if (!reminder.remarks) reminder.remarks = [];
+                        reminder.remarks.push({ text: "Email content copied for sending.", timestamp: new Date().toISOString() });
+                        saveDataToFirebase();
+                    } catch (err) {
+                        showToast('Failed to copy email content.', true);
+                    } finally {
+                        document.body.removeChild(tempTextArea);
+                    }
+                }
+            }
+        });
+
+        filterContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('filter-btn')) {
+                currentFilter = e.target.dataset.filter;
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                renderReminders();
+            }
+        });
+
+        tableBody.addEventListener('click', (e) => {
+            const completeBtn = e.target.closest('.complete-btn-gap');
+            if (completeBtn) {
+                const idToUpdate = parseInt(completeBtn.dataset.id);
+                const itemToUpdate = gapsData.find(item => item.id === idToUpdate);
+                if (itemToUpdate) { itemToUpdate.status = 'Implemented'; saveDataToFirebase(); showToast('Gap marked as Implemented.'); }
+            }
+        });
+
+        tableBody.addEventListener('change', (e) => {
+            if (e.target.classList.contains('status-select')) {
+                const idToUpdate = parseInt(e.target.dataset.id);
+                const newStatus = e.target.value;
+                const itemToUpdate = gapsData.find(item => item.id === idToUpdate);
+                if (itemToUpdate) { itemToUpdate.status = newStatus; saveDataToFirebase(); }
+            }
+        });
+
+        tableBody.addEventListener('input', (e) => {
+            if (e.target.hasAttribute('contenteditable')) {
+                const idToUpdate = parseInt(e.target.dataset.id);
+                const fieldToUpdate = e.target.dataset.field;
+                const newValue = fieldToUpdate === 'action' ? e.target.innerHTML.replace(/<br\s*[\/]?>/gi, '\n') : e.target.innerText;
+                const itemToUpdate = gapsData.find(item => item.id === idToUpdate);
+                if (itemToUpdate) {
+                    itemToUpdate[fieldToUpdate] = newValue;
+                    clearTimeout(e.target.saveTimeout);
+                    e.target.saveTimeout = setTimeout(saveDataToFirebase, 600);
+                }
+            }
+        });
+
+        // Initialize view (data sync starts after sign-in via onAuthStateChanged)
+        switchTab('gaps');
+        switchReminderTab('pending');
+    </script>
+</body>
+</html>
