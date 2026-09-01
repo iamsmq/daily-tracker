@@ -253,6 +253,7 @@
         let gapsData = [];
         let remindersData = [];
         let scheduleData = {}; // { "08:00": "plan text", ... } — one fixed recurring schedule
+        let scheduleStatus = { date: '', done: {} }; // per-day completion ticks; resets when the date changes
         let templatesData = []; // [{ id, title, body }]
         let renderedTemplateSig = '';
         let currentFilter = 'All';
@@ -316,7 +317,7 @@
 
         const saveDataToFirebase = async () => {
             try {
-                await setDoc(docRef, { gaps: gapsData, reminders: remindersData, schedule: scheduleData, templates: templatesData });
+                await setDoc(docRef, { gaps: gapsData, reminders: remindersData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData });
             } catch (error) {
                 console.error("Error saving data to Firebase:", error);
                 showToast("Network/permission error with Firestore.", true);
@@ -370,6 +371,7 @@
                     gapsData = data.gaps || [];
                     remindersData = data.reminders || [];
                     scheduleData = data.schedule || {};
+                    scheduleStatus = data.scheduleStatus || { date: '', done: {} };
                     templatesData = data.templates || [];
                     remindersData.forEach(r => { if (!r.remarks) r.remarks = []; });
                     refreshUI();
@@ -378,6 +380,7 @@
                     gapsData = [];
                     remindersData = [];
                     scheduleData = {};
+                    scheduleStatus = { date: '', done: {} };
                     templatesData = [];
                     saveDataToFirebase();
                 }
@@ -543,21 +546,38 @@
             return arr;
         })();
 
+        const todayStr = () => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        };
+
         const renderSchedule = () => {
             // Build the rows once, then only update values so typing is never interrupted.
             if (!scheduleList.dataset.built) {
                 scheduleList.innerHTML = SLOTS.map(slot => `
-                    <div class="flex items-center gap-3 px-3 py-2">
+                    <div class="schedule-row flex items-center gap-3 px-3 py-2" data-slot="${slot.key}">
                         <div class="w-32 shrink-0 text-sm font-medium text-[#0A174E]">${slot.label}</div>
                         <input type="text" class="schedule-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" data-slot="${slot.key}" placeholder="Add a plan...">
+                        <button class="schedule-done-btn shrink-0 text-xs font-medium px-3 py-1.5 rounded-md" data-slot="${slot.key}"></button>
                     </div>
                 `).join('');
                 scheduleList.dataset.built = '1';
             }
-            scheduleList.querySelectorAll('.schedule-input').forEach(inp => {
+            // Ticks only count for today. If the stored date is not today, show all as not done.
+            const doneMap = (scheduleStatus.date === todayStr()) ? (scheduleStatus.done || {}) : {};
+            scheduleList.querySelectorAll('.schedule-row').forEach(row => {
+                const slot = row.dataset.slot;
+                const inp = row.querySelector('.schedule-input');
+                const btn = row.querySelector('.schedule-done-btn');
+                const done = !!doneMap[slot];
                 if (document.activeElement !== inp) {
-                    inp.value = scheduleData[inp.dataset.slot] || '';
+                    inp.value = scheduleData[slot] || '';
                 }
+                inp.classList.toggle('line-through', done);
+                inp.classList.toggle('text-gray-400', done);
+                btn.textContent = done ? '\u2713 Done' : 'Mark done';
+                btn.className = 'schedule-done-btn shrink-0 text-xs font-medium px-3 py-1.5 rounded-md ' +
+                    (done ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-300');
             });
         };
 
@@ -669,6 +689,22 @@
                 clearTimeout(e.target.saveTimeout);
                 e.target.saveTimeout = setTimeout(saveDataToFirebase, 600);
             }
+        });
+
+        // Schedule: toggle a slot's completion for today (resets automatically after midnight)
+        scheduleList.addEventListener('click', (e) => {
+            const btn = e.target.closest('.schedule-done-btn');
+            if (!btn) return;
+            const slot = btn.dataset.slot;
+            const today = todayStr();
+            // New day (or first tick): start a fresh done map dated to today.
+            if (scheduleStatus.date !== today) {
+                scheduleStatus = { date: today, done: {} };
+            }
+            if (!scheduleStatus.done) scheduleStatus.done = {};
+            if (scheduleStatus.done[slot]) { delete scheduleStatus.done[slot]; } else { scheduleStatus.done[slot] = true; }
+            saveDataToFirebase();
+            renderSchedule();
         });
 
         clearScheduleBtn.addEventListener('click', () => {
