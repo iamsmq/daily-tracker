@@ -7,9 +7,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --navy: #0A174E;
+            --navy-2: #182a72;
+            --gold: #F5D042;
+            --ink: #1f2937;
+            --bg: #eef1f6;
+            --line: #e6e8ef;
+            --radius: 14px;
+            --shadow-sm: 0 1px 2px rgba(10,23,78,.05), 0 2px 6px -2px rgba(10,23,78,.08);
+            --shadow-md: 0 6px 22px -8px rgba(10,23,78,.18), 0 2px 8px -4px rgba(10,23,78,.10);
+        }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: var(--bg);
+            color: var(--ink);
         }
         [contenteditable=true]:empty:before {
             content: attr(placeholder);
@@ -17,15 +29,91 @@
             display: block;
             color: #9ca3af;
         }
+
+        /* Header banner: the one bold element */
+        .app-header {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+            border-radius: var(--radius);
+            padding: 1.35rem 1.6rem;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+        .app-header::after {
+            content: "";
+            position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+            background: linear-gradient(90deg, var(--gold), transparent 70%);
+        }
+        .app-header h1 { color: #fff; letter-spacing: -0.02em; }
+        .app-header p { color: rgba(255,255,255,.72); }
+        .app-header #user-email { color: rgba(255,255,255,.78); }
+        .app-header #sign-out-btn {
+            color: #fff; text-decoration: none;
+            border: 1px solid rgba(255,255,255,.35);
+            padding: .25rem .7rem; border-radius: 8px;
+        }
+        .app-header #sign-out-btn:hover { background: rgba(255,255,255,.12); }
+
+        /* Segmented tab bar */
+        .tab-bar {
+            border: none !important;
+            background: #fff;
+            padding: .3rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            overflow-x: auto;
+        }
+        .tab-bar nav { gap: .2rem; }
+        .tab-btn {
+            border-radius: 9px;
+            transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
+        }
+        .tab-btn.active { background-color: var(--navy); color: #fff; box-shadow: var(--shadow-sm); }
+        .tab-btn:not(.active) { background-color: transparent; color: #55617a; }
+        .tab-btn:not(.active):hover { background-color: #eef1f6; color: var(--navy); }
+
+        .sub-tab-btn.active { border-color: var(--navy); color: var(--navy); border-bottom-width: 2px; }
+        .sub-tab-btn:not(.active) { border-color: transparent; color: #6b7280; }
+        .filter-btn { transition: background-color .15s ease, color .15s ease; }
+        .filter-btn.active { background-color: var(--navy); color: white; }
+        .filter-btn:not(.active) { background-color: white; color: #4b5563; }
+
+        /* Surfaces */
+        .shadow { box-shadow: var(--shadow-sm) !important; }
+        .shadow-md { box-shadow: var(--shadow-md) !important; }
+        .rounded-lg { border-radius: var(--radius) !important; }
+
+        /* Buttons: quiet, responsive feedback */
+        button { transition: background-color .15s ease, box-shadow .15s ease, transform .04s ease; }
+        button:active { transform: translateY(1px); }
+
+        /* Inputs */
+        input, select, textarea, [contenteditable] {
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        /* Table header */
+        thead th { background: #f7f8fb; }
+
+        /* Toast */
         .toast {
             transition: opacity 0.5s, transform 0.5s;
+            animation: toastIn .35s ease;
+            border-radius: 12px !important;
         }
-        .tab-btn.active { background-color: #0A174E; color: white; }
-        .tab-btn:not(.active) { background-color: #e5e7eb; color: #4b5563; }
-        .sub-tab-btn.active { border-color: #0A174E; color: #0A174E; border-bottom-width: 2px; }
-        .sub-tab-btn:not(.active) { border-color: transparent; color: #6b7280; }
-        .filter-btn.active { background-color: #0A174E; color: white; }
-        .filter-btn:not(.active) { background-color: white; color: #4b5563; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-12px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        /* Slim scrollbar */
+        ::-webkit-scrollbar { height: 9px; width: 9px; }
+        ::-webkit-scrollbar-thumb { background: #cbd2e0; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #aab4c8; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, .toast { animation: none !important; transition: none !important; }
+        }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8">
@@ -47,11 +135,11 @@
 
     <!-- Main App (hidden until signed in) -->
     <div id="app-container" class="hidden max-w-7xl mx-auto">
-        <header class="mb-6">
+        <header class="app-header mb-6">
             <div class="flex justify-between items-start gap-4 flex-wrap">
                 <div>
-                    <h1 class="text-3xl font-bold text-[#0A174E]">My daily tracker</h1>
-                    <p class="text-lg text-gray-600">Gaps &amp; Reminders</p>
+                    <h1 class="text-3xl font-bold">My daily tracker</h1>
+                    <p class="text-lg">Operations control panel</p>
                 </div>
                 <div class="text-right">
                     <p id="user-email" class="text-sm text-gray-600"></p>
@@ -69,12 +157,13 @@
         </header>
 
         <!-- Main Tab Navigation -->
-        <div class="mb-6 border-b border-gray-200">
-            <nav class="flex -mb-px space-x-4" aria-label="Tabs">
-                <button id="tab-gaps" class="tab-btn active whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Gaps Tracker</button>
-                <button id="tab-reminders" class="tab-btn whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Reminders</button>
-                <button id="tab-schedule" class="tab-btn whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Schedule</button>
-                <button id="tab-templates" class="tab-btn whitespace-nowrap py-3 px-5 font-medium text-sm rounded-t-lg focus:outline-none">Templates</button>
+        <div class="tab-bar mb-6">
+            <nav class="flex" aria-label="Tabs">
+                <button id="tab-gaps" class="tab-btn active whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Gaps Tracker</button>
+                <button id="tab-reminders" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Reminders</button>
+                <button id="tab-schedule" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Schedule</button>
+                <button id="tab-templates" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Templates</button>
+                <button id="tab-claims" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Claims</button>
             </nav>
         </div>
 
@@ -229,6 +318,84 @@
             </div>
             <div id="templates-list" class="space-y-4"></div>
         </div>
+
+        <!-- Claims Approval Content -->
+        <div id="claims-content" class="hidden">
+            <div class="bg-white p-6 shadow-md rounded-lg mb-8">
+                <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Log Approved Claim</h2>
+                <form id="add-claim-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label for="new-claim-date" class="block text-sm font-medium text-gray-700">Date</label>
+                        <input type="date" id="new-claim-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" required>
+                    </div>
+                    <div>
+                        <label for="new-claim-location" class="block text-sm font-medium text-gray-700">Location</label>
+                        <input type="text" id="new-claim-location" list="claim-location-options" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Khamis Mushait" required>
+                        <datalist id="claim-location-options"></datalist>
+                    </div>
+                    <div>
+                        <label for="new-claim-expense" class="block text-sm font-medium text-gray-700">Expense for</label>
+                        <input type="text" id="new-claim-expense" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Fuel, vehicle repair" required>
+                    </div>
+                    <div>
+                        <label for="new-claim-amount" class="block text-sm font-medium text-gray-700">Amount</label>
+                        <input type="number" step="0.01" min="0" id="new-claim-amount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="0.00" required>
+                    </div>
+                    <div class="md:col-span-2 lg:col-span-4 flex justify-end">
+                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0A174E] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F5D042]">Add Claim</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-white p-4 shadow-md rounded-lg mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                    <div class="lg:col-span-2">
+                        <label for="claim-search" class="block text-xs font-medium text-gray-600 mb-1">Search (expense or location)</label>
+                        <input type="text" id="claim-search" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" placeholder="Type to filter...">
+                    </div>
+                    <div>
+                        <label for="claim-location-filter" class="block text-xs font-medium text-gray-600 mb-1">Location</label>
+                        <select id="claim-location-filter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm">
+                            <option value="All">All locations</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="claim-date-from" class="block text-xs font-medium text-gray-600 mb-1">From date</label>
+                        <input type="date" id="claim-date-from" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm">
+                    </div>
+                    <div>
+                        <label for="claim-date-to" class="block text-xs font-medium text-gray-600 mb-1">To date</label>
+                        <input type="date" id="claim-date-to" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm">
+                    </div>
+                </div>
+                <div class="flex justify-end mt-3">
+                    <button id="claim-clear-filters" class="text-xs font-medium px-3 py-1.5 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Clear filters</button>
+                </div>
+            </div>
+
+            <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Location</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Expense for</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-[#0A174E] uppercase tracking-wider">Amount</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-[#0A174E] uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="claims-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                    <tfoot>
+                        <tr class="bg-gray-50 font-semibold text-[#0A174E]">
+                            <td class="px-6 py-3 text-sm" colspan="3">Total (<span id="claims-count">0</span> shown)</td>
+                            <td class="px-6 py-3 text-sm text-right" id="claims-total">0.00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -255,6 +422,8 @@
         let scheduleData = {}; // { "08:00": "plan text", ... } — one fixed recurring schedule
         let scheduleStatus = { date: '', done: {} }; // per-day completion ticks; resets when the date changes
         let templatesData = []; // [{ id, title, body }]
+        let claimsData = []; // [{ id, date, location, expenseFor, amount }]
+        let claimFilters = { search: '', location: 'All', from: '', to: '' };
         let renderedTemplateSig = '';
         let currentFilter = 'All';
         let gapsView = 'active'; // 'active' = Not Started / In Progress / On Hold; 'completed' = Implemented
@@ -300,6 +469,18 @@
         const templatesContent = document.getElementById('templates-content');
         const templatesList = document.getElementById('templates-list');
         const addTemplateForm = document.getElementById('add-template-form');
+        const tabClaims = document.getElementById('tab-claims');
+        const claimsContent = document.getElementById('claims-content');
+        const addClaimForm = document.getElementById('add-claim-form');
+        const claimsTableBody = document.getElementById('claims-table-body');
+        const claimsTotalEl = document.getElementById('claims-total');
+        const claimsCountEl = document.getElementById('claims-count');
+        const claimLocationOptions = document.getElementById('claim-location-options');
+        const claimLocationFilter = document.getElementById('claim-location-filter');
+        const claimSearchEl = document.getElementById('claim-search');
+        const claimDateFromEl = document.getElementById('claim-date-from');
+        const claimDateToEl = document.getElementById('claim-date-to');
+        const claimClearFiltersBtn = document.getElementById('claim-clear-filters');
 
         const docRef = doc(db, "trackerData", "shared");
 
@@ -317,7 +498,7 @@
 
         const saveDataToFirebase = async () => {
             try {
-                await setDoc(docRef, { gaps: gapsData, reminders: remindersData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData });
+                await setDoc(docRef, { gaps: gapsData, reminders: remindersData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData, claims: claimsData });
             } catch (error) {
                 console.error("Error saving data to Firebase:", error);
                 showToast("Network/permission error with Firestore.", true);
@@ -373,6 +554,7 @@
                     scheduleData = data.schedule || {};
                     scheduleStatus = data.scheduleStatus || { date: '', done: {} };
                     templatesData = data.templates || [];
+                    claimsData = data.claims || [];
                     remindersData.forEach(r => { if (!r.remarks) r.remarks = []; });
                     refreshUI();
                 } else {
@@ -382,6 +564,7 @@
                     scheduleData = {};
                     scheduleStatus = { date: '', done: {} };
                     templatesData = [];
+                    claimsData = [];
                     saveDataToFirebase();
                 }
             }, (error) => {
@@ -615,6 +798,56 @@
             });
         };
 
+        const fmtAmount = (n) => (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const getFilteredClaims = () => {
+            const s = claimFilters.search.trim().toLowerCase();
+            return claimsData.filter(c => {
+                if (claimFilters.location !== 'All' && c.location !== claimFilters.location) return false;
+                if (claimFilters.from && (c.date || '') < claimFilters.from) return false;
+                if (claimFilters.to && (c.date || '') > claimFilters.to) return false;
+                if (s) {
+                    const hay = `${c.expenseFor || ''} ${c.location || ''}`.toLowerCase();
+                    if (!hay.includes(s)) return false;
+                }
+                return true;
+            });
+        };
+
+        const renderClaims = () => {
+            // Refresh the location choices (dropdown filter + add-form datalist), keeping current selection.
+            const locations = [...new Set(claimsData.map(c => c.location).filter(Boolean))].sort();
+            claimLocationOptions.innerHTML = locations.map(l => `<option value="${l.replace(/"/g, '&quot;')}"></option>`).join('');
+            const prev = claimFilters.location;
+            claimLocationFilter.innerHTML = '<option value="All">All locations</option>' +
+                locations.map(l => `<option value="${l.replace(/"/g, '&quot;')}">${l}</option>`).join('');
+            claimLocationFilter.value = locations.includes(prev) || prev === 'All' ? prev : 'All';
+            claimFilters.location = claimLocationFilter.value;
+
+            // Rows, newest date first
+            const rows = getFilteredClaims().slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+            claimsTableBody.innerHTML = '';
+            if (rows.length === 0) {
+                claimsTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-sm text-gray-500 text-center">No claims match these filters. Log one above, or clear the filters.</td></tr>`;
+            } else {
+                rows.forEach(c => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-700">${c.date || ''}</td>
+                        <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-700">${c.location || ''}</td>
+                        <td class="px-6 py-3 text-sm text-gray-700">${c.expenseFor || ''}</td>
+                        <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900 text-right font-medium">${fmtAmount(c.amount)}</td>
+                        <td class="px-6 py-3 whitespace-nowrap text-sm text-right">
+                            <button class="delete-claim text-red-600 hover:text-red-800 font-medium" data-id="${c.id}">Delete</button>
+                        </td>`;
+                    claimsTableBody.appendChild(tr);
+                });
+            }
+            const total = rows.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+            claimsTotalEl.textContent = fmtAmount(total);
+            claimsCountEl.textContent = rows.length;
+        };
+
         const refreshUI = () => {
             renderGapsDashboard();
             renderGapsTable();
@@ -622,6 +855,7 @@
             renderReminders();
             renderSchedule();
             renderTemplates();
+            renderClaims();
         };
 
         const switchTab = (tab) => {
@@ -629,10 +863,12 @@
             remindersContent.classList.add('hidden');
             scheduleContent.classList.add('hidden');
             templatesContent.classList.add('hidden');
+            claimsContent.classList.add('hidden');
             tabGaps.classList.remove('active');
             tabReminders.classList.remove('active');
             tabSchedule.classList.remove('active');
             tabTemplates.classList.remove('active');
+            tabClaims.classList.remove('active');
             if (tab === 'gaps') {
                 gapsContent.classList.remove('hidden');
                 tabGaps.classList.add('active');
@@ -645,6 +881,9 @@
             } else if (tab === 'templates') {
                 templatesContent.classList.remove('hidden');
                 tabTemplates.classList.add('active');
+            } else if (tab === 'claims') {
+                claimsContent.classList.remove('hidden');
+                tabClaims.classList.add('active');
             }
         };
 
@@ -675,6 +914,7 @@
         tabReminders.addEventListener('click', () => switchTab('reminders'));
         tabSchedule.addEventListener('click', () => switchTab('schedule'));
         tabTemplates.addEventListener('click', () => switchTab('templates'));
+        tabClaims.addEventListener('click', () => switchTab('claims'));
         gapSubTabActive.addEventListener('click', () => switchGapsView('active'));
         gapSubTabCompleted.addEventListener('click', () => switchGapsView('completed'));
         subTabPending.addEventListener('click', () => switchReminderTab('pending'));
@@ -787,6 +1027,48 @@
                     e.target.saveTimeout = setTimeout(saveDataToFirebase, 600);
                 }
             }
+        });
+
+        // Claims: add
+        addClaimForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const date = document.getElementById('new-claim-date').value;
+            const location = document.getElementById('new-claim-location').value.trim();
+            const expenseFor = document.getElementById('new-claim-expense').value.trim();
+            const amount = parseFloat(document.getElementById('new-claim-amount').value);
+            if (!date || !location || !expenseFor || isNaN(amount)) return;
+            const newId = claimsData.length > 0 ? Math.max(...claimsData.map(c => c.id)) + 1 : 1;
+            claimsData.push({ id: newId, date: date, location: location, expenseFor: expenseFor, amount: amount });
+            saveDataToFirebase();
+            addClaimForm.reset();
+            showToast('Claim logged.');
+        });
+
+        // Claims: delete
+        claimsTableBody.addEventListener('click', (e) => {
+            const delBtn = e.target.closest('.delete-claim');
+            if (delBtn) {
+                const idToDelete = parseInt(delBtn.dataset.id);
+                if (confirm('Delete this claim?')) {
+                    claimsData = claimsData.filter(c => c.id !== idToDelete);
+                    saveDataToFirebase();
+                    showToast('Claim deleted.');
+                }
+            }
+        });
+
+        // Claims: filters
+        claimSearchEl.addEventListener('input', () => { claimFilters.search = claimSearchEl.value; renderClaims(); });
+        claimLocationFilter.addEventListener('change', () => { claimFilters.location = claimLocationFilter.value; renderClaims(); });
+        claimDateFromEl.addEventListener('change', () => { claimFilters.from = claimDateFromEl.value; renderClaims(); });
+        claimDateToEl.addEventListener('change', () => { claimFilters.to = claimDateToEl.value; renderClaims(); });
+        claimClearFiltersBtn.addEventListener('click', () => {
+            claimFilters = { search: '', location: 'All', from: '', to: '' };
+            claimSearchEl.value = '';
+            claimDateFromEl.value = '';
+            claimDateToEl.value = '';
+            claimLocationFilter.value = 'All';
+            renderClaims();
         });
 
         emailBtn.addEventListener('click', () => {
