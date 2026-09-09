@@ -214,6 +214,7 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Date</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Gap</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Corrective Actions &amp; Comments</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Responsible</th>
@@ -612,7 +613,7 @@
             );
             if (rows.length === 0) {
                 const msg = gapsView === 'completed' ? 'No completed gaps yet.' : 'No active gaps. Add one above.';
-                tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-6 text-sm text-gray-500 text-center">${msg}</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-6 text-sm text-gray-500 text-center">${msg}</td></tr>`;
                 return;
             }
             rows.forEach(item => {
@@ -637,6 +638,7 @@
                     : `<button class="complete-btn-gap text-green-700 hover:text-green-900 font-semibold py-1 px-3 rounded-md bg-green-200 hover:bg-green-300" data-id="${item.id}">Complete</button>`;
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.date || 'N/A'}</td>
                     <td class="px-6 py-4 text-sm text-gray-700 min-w-[12rem]" contenteditable="true" data-field="gap" data-id="${item.id}">${item.gap || ''}</td>
                     <td class="px-6 py-4 text-sm text-gray-700 min-w-[16rem]">
                         <div class="text-gray-700 focus:outline-none rounded px-1 -mx-1" contenteditable="true" data-field="action" data-id="${item.id}">${formattedAction}</div>
