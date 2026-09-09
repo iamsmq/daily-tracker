@@ -273,7 +273,7 @@
                         <button id="sub-tab-completed" class="sub-tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Completed</button>
                     </nav>
                 </div>
-                <div id="filter-container" class="mt-4">
+                <div id="filter-container" class="mt-4 hidden">
                     <div class="flex space-x-2">
                         <button class="filter-btn active px-3 py-1 text-sm font-medium rounded-md shadow-sm border border-gray-300" data-filter="All">All</button>
                         <button class="filter-btn px-3 py-1 text-sm font-medium rounded-md shadow-sm border border-gray-300" data-filter="High">High</button>
@@ -282,10 +282,23 @@
                     </div>
                 </div>
                 <div id="pending-reminders-content" class="mt-6">
-                    <ul id="pending-reminders-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-start"></ul>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                        <div>
+                            <h3 class="text-sm font-semibold mb-2 px-2 py-1 rounded-md bg-red-100 text-red-800">High</h3>
+                            <ul id="pending-high" class="space-y-3"></ul>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold mb-2 px-2 py-1 rounded-md bg-yellow-100 text-yellow-800">Medium</h3>
+                            <ul id="pending-medium" class="space-y-3"></ul>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold mb-2 px-2 py-1 rounded-md bg-green-100 text-green-800">Low</h3>
+                            <ul id="pending-low" class="space-y-3"></ul>
+                        </div>
+                    </div>
                 </div>
                 <div id="completed-reminders-content" class="hidden mt-6">
-                    <ul id="completed-reminders-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-start"></ul>
+                    <ul id="completed-reminders-list" class="space-y-3"></ul>
                 </div>
             </div>
         </div>
@@ -461,7 +474,9 @@
         const subTabCompleted = document.getElementById('sub-tab-completed');
         const pendingRemindersContent = document.getElementById('pending-reminders-content');
         const completedRemindersContent = document.getElementById('completed-reminders-content');
-        const pendingRemindersList = document.getElementById('pending-reminders-list');
+        const pendingHighList = document.getElementById('pending-high');
+        const pendingMediumList = document.getElementById('pending-medium');
+        const pendingLowList = document.getElementById('pending-low');
         const completedRemindersList = document.getElementById('completed-reminders-list');
         const gapSubTabActive = document.getElementById('gap-sub-tab-active');
         const gapSubTabCompleted = document.getElementById('gap-sub-tab-completed');
@@ -666,15 +681,17 @@
         };
 
         const renderReminders = () => {
-            let pendingReminders = remindersData.filter(r => r.status === 'pending');
+            const pendingReminders = remindersData.filter(r => r.status === 'pending');
             const completedReminders = remindersData.filter(r => r.status === 'completed');
-            if (currentFilter !== 'All') {
-                pendingReminders = pendingReminders.filter(r => r.priority === currentFilter);
-            }
-            const renderList = (list, element, isCompletedList = false) => {
+            // Sort by creation order (id ascending), then split by priority into columns.
+            const byCreation = (a, b) => a.id - b.id;
+            const pendingHigh = pendingReminders.filter(r => r.priority === 'High').sort(byCreation);
+            const pendingMedium = pendingReminders.filter(r => r.priority === 'Medium').sort(byCreation);
+            const pendingLow = pendingReminders.filter(r => r.priority === 'Low').sort(byCreation);
+            const renderList = (list, element, isCompletedList = false, emptyMsg = 'No reminders found in this view.') => {
                 element.innerHTML = '';
                 if (list.length === 0) {
-                    element.innerHTML = `<li class="col-span-full text-gray-500 p-4 bg-white rounded-md shadow-sm">No reminders found in this view.</li>`;
+                    element.innerHTML = `<li class="text-gray-400 text-sm p-3 bg-white rounded-md shadow-sm">${emptyMsg}</li>`;
                     return;
                 }
                 list.forEach(reminder => {
@@ -732,8 +749,10 @@
                     element.appendChild(li);
                 });
             };
-            renderList(pendingReminders, pendingRemindersList);
-            renderList(completedReminders, completedRemindersList, true);
+            renderList(pendingHigh, pendingHighList, false, 'No high-priority reminders.');
+            renderList(pendingMedium, pendingMediumList, false, 'No medium-priority reminders.');
+            renderList(pendingLow, pendingLowList, false, 'No low-priority reminders.');
+            renderList(completedReminders, completedRemindersList, true, 'Nothing completed yet.');
         };
 
         // Fixed half-hour slots from 08:00 to 19:00 (last slot 18:30-19:00)
@@ -918,7 +937,6 @@
             if (tab === 'pending') {
                 pendingRemindersContent.classList.remove('hidden');
                 subTabPending.classList.add('active');
-                filterContainer.classList.remove('hidden');
             } else if (tab === 'completed') {
                 completedRemindersContent.classList.remove('hidden');
                 subTabCompleted.classList.add('active');
