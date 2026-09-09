@@ -418,7 +418,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -504,7 +504,9 @@
         const claimDateToEl = document.getElementById('claim-date-to');
         const claimClearFiltersBtn = document.getElementById('claim-clear-filters');
 
-        const docRef = doc(db, "trackerData", "shared");
+        // Each signed-in user reads/writes only their own document at trackerData/{uid}.
+        let docRef = null;
+        const sharedRef = doc(db, "trackerData", "shared"); // old single-doc location, read once to migrate
 
         const showToast = (message, isError = false) => {
             const toast = document.createElement('div');
@@ -519,6 +521,7 @@
         };
 
         const saveDataToFirebase = async () => {
+            if (!docRef) return;
             try {
                 await setDoc(docRef, { gaps: gapsData, reminders: remindersData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData, claims: claimsData, activityLog: activityLog });
             } catch (error) {
@@ -534,10 +537,12 @@
                 appContainer.classList.remove('hidden');
                 userEmailEl.textContent = user.email || '';
                 uidValueEl.textContent = user.uid;
+                docRef = doc(db, "trackerData", user.uid);
                 startDataSync();
             } else {
                 appContainer.classList.add('hidden');
                 loginScreen.classList.remove('hidden');
+                docRef = null;
                 if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
             }
         });
@@ -581,20 +586,45 @@
                     remindersData.forEach(r => { if (!r.remarks) r.remarks = []; });
                     refreshUI();
                 } else {
-                    // First run only: create an empty doc. No sample data.
-                    gapsData = [];
-                    remindersData = [];
-                    scheduleData = {};
-                    scheduleStatus = { date: '', done: {} };
-                    templatesData = [];
-                    claimsData = [];
-                    activityLog = [];
-                    saveDataToFirebase();
+                    // User doc doesn't exist yet: try a one-time copy of the old shared data,
+                    // otherwise start blank. New users cannot read shared, so they begin empty.
+                    migrateOrInit();
                 }
             }, (error) => {
                 console.error("Firestore snapshot error:", error);
                 showToast("Network/permission error with Firestore.", true);
             });
+        };
+
+        const migrateOrInit = async () => {
+            if (!docRef) return;
+            try {
+                const sharedSnap = await getDoc(sharedRef);
+                if (sharedSnap.exists()) {
+                    const d = sharedSnap.data();
+                    await setDoc(docRef, {
+                        gaps: d.gaps || [],
+                        reminders: d.reminders || [],
+                        schedule: d.schedule || {},
+                        scheduleStatus: d.scheduleStatus || { date: '', done: {} },
+                        templates: d.templates || [],
+                        claims: d.claims || [],
+                        activityLog: d.activityLog || []
+                    });
+                    showToast('Your existing data was moved to your account.');
+                    return; // snapshot fires again with the copied data
+                }
+            } catch (e) {
+                // No permission to read shared (a normal new user) — fall through to a blank start.
+            }
+            gapsData = [];
+            remindersData = [];
+            scheduleData = {};
+            scheduleStatus = { date: '', done: {} };
+            templatesData = [];
+            claimsData = [];
+            activityLog = [];
+            saveDataToFirebase();
         };
 
         // ---------- RENDER ----------
