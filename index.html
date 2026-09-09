@@ -174,20 +174,24 @@
             <!-- Add New Gap form (moved to top) -->
             <div class="bg-white p-6 shadow-md rounded-lg mb-8">
                 <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Add New Gap</h2>
-                <form id="add-gap-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div>
-                        <label for="new-gap" class="block text-sm font-medium text-gray-700">Identified Gap</label>
+                <form id="add-gap-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-2">
+                        <label for="new-gap" class="block text-sm font-medium text-gray-700">Gap</label>
                         <input type="text" id="new-gap" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Gaps in performance" required>
                     </div>
-                    <div>
+                    <div class="lg:col-span-2">
                         <label for="new-action" class="block text-sm font-medium text-gray-700">Corrective Action(s)</label>
                         <textarea id="new-action" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Restructure routes..." required></textarea>
                     </div>
                     <div>
-                        <label for="new-owner" class="block text-sm font-medium text-gray-700">Owner/Team</label>
-                        <input type="text" id="new-owner" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Operations Team">
+                        <label for="new-responsible" class="block text-sm font-medium text-gray-700">Responsible</label>
+                        <input type="text" id="new-responsible" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Who does the work">
                     </div>
-                    <div class="md:col-span-2 lg:col-span-3 flex justify-end">
+                    <div>
+                        <label for="new-accountable" class="block text-sm font-medium text-gray-700">Accountable</label>
+                        <input type="text" id="new-accountable" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Who owns the outcome">
+                    </div>
+                    <div class="md:col-span-2 lg:col-span-4 flex justify-end">
                         <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0A174E] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F5D042]">Add Item</button>
                     </div>
                 </form>
@@ -210,12 +214,11 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">ID</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Date Identified</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Identified Gap</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Corrective Action(s)</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Owner/Team</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Gap</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Corrective Actions &amp; Comments</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Responsible</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Accountable</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Notes / Next Steps</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -609,32 +612,49 @@
             );
             if (rows.length === 0) {
                 const msg = gapsView === 'completed' ? 'No completed gaps yet.' : 'No active gaps. Add one above.';
-                tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-6 text-sm text-gray-500 text-center">${msg}</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-6 text-sm text-gray-500 text-center">${msg}</td></tr>`;
                 return;
             }
             rows.forEach(item => {
                 const row = document.createElement('tr');
-                const statusClasses = { 'In Progress': 'bg-yellow-100', 'Implemented': 'bg-green-100', 'On Hold': 'bg-blue-100', 'Not Started': 'bg-white' };
+                const statusClasses = { 'In Progress': 'bg-yellow-50', 'Implemented': 'bg-green-50', 'On Hold': 'bg-blue-50', 'Not Started': 'bg-white' };
                 row.className = statusClasses[item.status] || 'bg-white';
+                row.style.verticalAlign = 'top';
                 const formattedAction = (item.action || '').replace(/\n/g, '<br>');
+                const responsibleVal = item.responsible !== undefined ? item.responsible : (item.owner || '');
+                const commentsHtml = (item.comments || []).map(c => `
+                    <li class="text-xs text-gray-600 mt-1 pl-2 border-l-2 border-gray-300">
+                        <span class="font-medium text-gray-700">${new Date(c.timestamp).toLocaleString()}</span>: ${c.text}
+                    </li>
+                `).join('');
+                const addCommentForm = `
+                    <form class="add-gap-comment-form mt-2 flex gap-2" data-id="${item.id}">
+                        <input type="text" class="gap-comment-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-xs" placeholder="Add a comment..." required>
+                        <button type="submit" class="text-xs font-medium px-3 py-1 border border-transparent rounded-md shadow-sm text-white bg-[#0A174E] hover:bg-opacity-90">Add</button>
+                    </form>`;
                 const actionButton = gapsView === 'completed'
                     ? `<button class="delete-btn-gap text-red-600 hover:text-red-800 font-semibold py-1 px-3 rounded-md bg-red-100 hover:bg-red-200" data-id="${item.id}">Delete</button>`
                     : `<button class="complete-btn-gap text-green-700 hover:text-green-900 font-semibold py-1 px-3 rounded-md bg-green-200 hover:bg-green-300" data-id="${item.id}">Complete</button>`;
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.id}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.date || 'N/A'}</td>
-                    <td class="px-6 py-4 text-sm text-gray-700" contenteditable="true" data-field="gap" data-id="${item.id}">${item.gap || ''}</td>
-                    <td class="px-6 py-4 text-sm text-gray-700" contenteditable="true" data-field="action" data-id="${item.id}">${formattedAction}</td>
-                    <td class="px-6 py-4 text-sm text-gray-700" contenteditable="true" data-field="owner" data-id="${item.id}">${item.owner || ''}</td>
+                    <td class="px-6 py-4 text-sm text-gray-700 min-w-[12rem]" contenteditable="true" data-field="gap" data-id="${item.id}">${item.gap || ''}</td>
+                    <td class="px-6 py-4 text-sm text-gray-700 min-w-[16rem]">
+                        <div class="text-gray-700 focus:outline-none rounded px-1 -mx-1" contenteditable="true" data-field="action" data-id="${item.id}">${formattedAction}</div>
+                        <div class="mt-2 pt-2 border-t border-gray-100">
+                            <ul class="space-y-1">${commentsHtml}</ul>
+                            ${addCommentForm}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-700 min-w-[8rem]" contenteditable="true" data-field="responsible" data-id="${item.id}">${responsibleVal}</td>
+                    <td class="px-6 py-4 text-sm text-gray-700 min-w-[8rem]" contenteditable="true" data-field="accountable" data-id="${item.id}">${item.accountable || ''}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <select class="status-select rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring focus:ring-[#F5D042] focus:ring-opacity-50" data-id="${item.id}">
+                        <select class="status-select rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring focus:ring-[#F5D042] focus:ring-opacity-50 text-sm" data-id="${item.id}">
                             <option value="Not Started" ${item.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
                             <option value="In Progress" ${item.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                             <option value="Implemented" ${item.status === 'Implemented' ? 'selected' : ''}>Implemented</option>
                             <option value="On Hold" ${item.status === 'On Hold' ? 'selected' : ''}>On Hold</option>
                         </select>
                     </td>
-                    <td class="px-6 py-4 text-sm text-gray-700" contenteditable="true" data-field="notes" data-id="${item.id}">${item.notes || ''}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         ${actionButton}
                     </td>
@@ -1072,9 +1092,9 @@
         });
 
         emailBtn.addEventListener('click', () => {
-            let body = `<p>Dear Team,</p><p>Please find below an update on our current operational gaps and corrective actions.</p><br><table style="width:100%; border-collapse: collapse; font-family: sans-serif;"><thead style="background-color: #f2f2f2;"><tr><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Gap</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Action</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Owner</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Status</th></tr></thead><tbody>`;
+            let body = `<p>Dear Team,</p><p>Please find below an update on our current operational gaps and corrective actions.</p><br><table style="width:100%; border-collapse: collapse; font-family: sans-serif;"><thead style="background-color: #f2f2f2;"><tr><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Gap</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Corrective Action</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Responsible</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Accountable</th><th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Status</th></tr></thead><tbody>`;
             gapsData.forEach(item => {
-                body += `<tr><td style="border: 1px solid #ddd; padding: 8px;">${item.gap}</td><td style="border: 1px solid #ddd; padding: 8px;">${(item.action || '').replace(/\n/g, '<br>')}</td><td style="border: 1px solid #ddd; padding: 8px;">${item.owner}</td><td style="border: 1px solid #ddd; padding: 8px;">${item.status}</td></tr>`;
+                body += `<tr><td style="border: 1px solid #ddd; padding: 8px;">${item.gap || ''}</td><td style="border: 1px solid #ddd; padding: 8px;">${(item.action || '').replace(/\n/g, '<br>')}</td><td style="border: 1px solid #ddd; padding: 8px;">${item.responsible !== undefined ? item.responsible : (item.owner || '')}</td><td style="border: 1px solid #ddd; padding: 8px;">${item.accountable || ''}</td><td style="border: 1px solid #ddd; padding: 8px;">${item.status || ''}</td></tr>`;
             });
             body += `</tbody></table><br><p>Best regards,</p><p>[Your Name]</p>`;
             const listener = (e) => {
@@ -1097,10 +1117,38 @@
             e.preventDefault();
             const newId = gapsData.length > 0 ? Math.max(...gapsData.map(item => item.id)) + 1 : 1;
             const today = new Date().toISOString().split('T')[0];
-            gapsData.push({ id: newId, date: today, gap: document.getElementById('new-gap').value, action: document.getElementById('new-action').value, owner: document.getElementById('new-owner').value, status: 'Not Started', notes: '' });
+            gapsData.push({
+                id: newId,
+                date: today,
+                gap: document.getElementById('new-gap').value,
+                action: document.getElementById('new-action').value,
+                responsible: document.getElementById('new-responsible').value,
+                accountable: document.getElementById('new-accountable').value,
+                status: 'Not Started',
+                comments: [],
+                notes: ''
+            });
             saveDataToFirebase();
             addGapForm.reset();
             showToast('New gap item added successfully!');
+        });
+
+        // Gaps: add a timestamped comment to a gap's Corrective Actions cell
+        tableBody.addEventListener('submit', (e) => {
+            if (e.target.classList.contains('add-gap-comment-form')) {
+                e.preventDefault();
+                const id = parseInt(e.target.dataset.id);
+                const input = e.target.querySelector('.gap-comment-input');
+                const text = input.value.trim();
+                if (!text) return;
+                const item = gapsData.find(g => g.id === id);
+                if (item) {
+                    if (!item.comments) item.comments = [];
+                    item.comments.push({ text: text, timestamp: new Date().toISOString() });
+                    saveDataToFirebase();
+                    showToast('Comment added.');
+                }
+            }
         });
 
         addReminderForm.addEventListener('submit', (e) => {
