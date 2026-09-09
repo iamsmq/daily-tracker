@@ -311,7 +311,7 @@
                     <button id="clear-schedule-btn" class="text-xs font-medium px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Clear all slots</button>
                 </div>
                 <p class="text-sm text-gray-500 mb-4">08:00 AM to 07:00 PM, half-hour slots. This schedule stays the same until you edit it.</p>
-                <div id="schedule-list" class="border border-gray-200 rounded-md divide-y divide-gray-100"></div>
+                <div id="schedule-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
         </div>
 
@@ -779,10 +779,12 @@
             // Build the rows once, then only update values so typing is never interrupted.
             if (!scheduleList.dataset.built) {
                 scheduleList.innerHTML = SLOTS.map(slot => `
-                    <div class="schedule-row flex items-center gap-3 px-3 py-2" data-slot="${slot.key}">
-                        <div class="w-32 shrink-0 text-sm font-medium text-[#0A174E]">${slot.label}</div>
-                        <input type="text" class="schedule-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" data-slot="${slot.key}" placeholder="Add a plan...">
-                        <button class="schedule-done-btn shrink-0 text-xs font-medium px-3 py-1.5 rounded-md" data-slot="${slot.key}"></button>
+                    <div class="schedule-row rounded-md border border-gray-200 bg-white p-2" data-slot="${slot.key}">
+                        <div class="flex items-center justify-between gap-2 mb-1">
+                            <span class="text-xs font-semibold text-[#0A174E]">${slot.label}</span>
+                            <button class="schedule-done-btn shrink-0 rounded-md" data-slot="${slot.key}"></button>
+                        </div>
+                        <input type="text" class="schedule-input block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm px-2 py-1" data-slot="${slot.key}" placeholder="Add a plan...">
                     </div>
                 `).join('');
                 scheduleList.dataset.built = '1';
@@ -799,8 +801,8 @@
                 }
                 inp.classList.toggle('line-through', done);
                 inp.classList.toggle('text-gray-400', done);
-                btn.textContent = done ? '\u2713 Done' : 'Mark done';
-                btn.className = 'schedule-done-btn shrink-0 text-xs font-medium px-3 py-1.5 rounded-md ' +
+                btn.textContent = done ? '\u2713 Done' : 'Mark';
+                btn.className = 'schedule-done-btn shrink-0 rounded-md text-[11px] font-medium px-2 py-0.5 ' +
                     (done ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-300');
             });
         };
