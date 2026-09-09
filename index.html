@@ -231,6 +231,7 @@
         <!-- Reminders Content -->
         <div id="reminders-content" class="hidden">
             <div id="reminders-dashboard" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
+            <div id="reminder-progress" class="bg-white p-6 shadow-md rounded-lg mb-8"></div>
             <div class="bg-white p-6 shadow-md rounded-lg">
                 <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Add New Reminder</h2>
                 <form id="add-reminder-form" class="space-y-4">
@@ -441,6 +442,7 @@
         let templatesData = []; // [{ id, title, body }]
         let claimsData = []; // [{ id, date, location, expenseFor, amount }]
         let claimFilters = { search: '', location: 'All', from: '', to: '' };
+        let activityLog = []; // [{ type: 'created'|'completed'|'escalated', priority, day: 'YYYY-MM-DD', ts }]
         let renderedTemplateSig = '';
         let currentFilter = 'All';
         let gapsView = 'active'; // 'active' = Not Started / In Progress / On Hold; 'completed' = Implemented
@@ -478,6 +480,7 @@
         const pendingMediumList = document.getElementById('pending-medium');
         const pendingLowList = document.getElementById('pending-low');
         const completedRemindersList = document.getElementById('completed-reminders-list');
+        const reminderProgressEl = document.getElementById('reminder-progress');
         const gapSubTabActive = document.getElementById('gap-sub-tab-active');
         const gapSubTabCompleted = document.getElementById('gap-sub-tab-completed');
         const tabSchedule = document.getElementById('tab-schedule');
@@ -517,7 +520,7 @@
 
         const saveDataToFirebase = async () => {
             try {
-                await setDoc(docRef, { gaps: gapsData, reminders: remindersData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData, claims: claimsData });
+                await setDoc(docRef, { gaps: gapsData, reminders: remindersData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData, claims: claimsData, activityLog: activityLog });
             } catch (error) {
                 console.error("Error saving data to Firebase:", error);
                 showToast("Network/permission error with Firestore.", true);
@@ -574,6 +577,7 @@
                     scheduleStatus = data.scheduleStatus || { date: '', done: {} };
                     templatesData = data.templates || [];
                     claimsData = data.claims || [];
+                    activityLog = data.activityLog || [];
                     remindersData.forEach(r => { if (!r.remarks) r.remarks = []; });
                     refreshUI();
                 } else {
@@ -584,6 +588,7 @@
                     scheduleStatus = { date: '', done: {} };
                     templatesData = [];
                     claimsData = [];
+                    activityLog = [];
                     saveDataToFirebase();
                 }
             }, (error) => {
@@ -618,6 +623,64 @@
                 <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-red-500">High Priority</p><p class="text-3xl font-bold text-[#0A174E]">${high}</p></div>
                 <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-yellow-500">Medium Priority</p><p class="text-3xl font-bold text-[#0A174E]">${medium}</p></div>
                 <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-green-500">Low Priority</p><p class="text-3xl font-bold text-[#0A174E]">${low}</p></div>
+            `;
+        };
+
+        // Record a dated reminder event for the daily progress report
+        const logActivity = (type, reminder) => {
+            if (!Array.isArray(activityLog)) activityLog = [];
+            activityLog.push({
+                type: type,
+                priority: reminder ? reminder.priority : '',
+                day: todayStr(),
+                ts: new Date().toISOString()
+            });
+        };
+
+        const renderReminderProgress = () => {
+            const log = Array.isArray(activityLog) ? activityLog : [];
+            const today = todayStr();
+            const byDay = {};
+            const todayCounts = { created: 0, completed: 0, escalated: 0 };
+            log.forEach(e => {
+                if (!e || !e.day) return;
+                if (!byDay[e.day]) byDay[e.day] = { created: 0, completed: 0, escalated: 0 };
+                if (byDay[e.day][e.type] !== undefined) byDay[e.day][e.type]++;
+                if (e.day === today && todayCounts[e.type] !== undefined) todayCounts[e.type]++;
+            });
+            const days = Object.keys(byDay).sort().reverse().slice(0, 14);
+            const rowsHtml = days.length === 0
+                ? `<tr><td colspan="4" class="px-4 py-4 text-sm text-gray-500 text-center">No activity recorded yet. Counts start from now.</td></tr>`
+                : days.map(d => {
+                    const c = byDay[d];
+                    const isToday = d === today;
+                    return `<tr class="${isToday ? 'bg-yellow-50' : ''}">
+                        <td class="px-4 py-2 text-sm font-medium text-gray-800">${d}${isToday ? ' <span class="text-xs text-gray-500">(today)</span>' : ''}</td>
+                        <td class="px-4 py-2 text-sm text-center text-gray-700">${c.created}</td>
+                        <td class="px-4 py-2 text-sm text-center text-green-700">${c.completed}</td>
+                        <td class="px-4 py-2 text-sm text-center text-yellow-700">${c.escalated}</td>
+                    </tr>`;
+                }).join('');
+            reminderProgressEl.innerHTML = `
+                <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Daily Progress</h2>
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="rounded-lg border border-gray-200 p-4 text-center"><p class="text-sm font-medium text-gray-500">Created today</p><p class="text-3xl font-bold text-[#0A174E]">${todayCounts.created}</p></div>
+                    <div class="rounded-lg border border-gray-200 p-4 text-center"><p class="text-sm font-medium text-green-600">Completed today</p><p class="text-3xl font-bold text-[#0A174E]">${todayCounts.completed}</p></div>
+                    <div class="rounded-lg border border-gray-200 p-4 text-center"><p class="text-sm font-medium text-yellow-600">Escalated today</p><p class="text-3xl font-bold text-[#0A174E]">${todayCounts.escalated}</p></div>
+                </div>
+                <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Date</th>
+                                <th class="px-4 py-2 text-center text-xs font-medium text-[#0A174E] uppercase tracking-wider">Created</th>
+                                <th class="px-4 py-2 text-center text-xs font-medium text-[#0A174E] uppercase tracking-wider">Completed</th>
+                                <th class="px-4 py-2 text-center text-xs font-medium text-[#0A174E] uppercase tracking-wider">Escalated</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">${rowsHtml}</tbody>
+                    </table>
+                </div>
             `;
         };
 
@@ -895,6 +958,7 @@
             renderGapsDashboard();
             renderGapsTable();
             renderRemindersDashboard();
+            renderReminderProgress();
             renderReminders();
             renderSchedule();
             renderTemplates();
@@ -1180,7 +1244,9 @@
             const category = document.querySelector('input[name="reminder-category"]:checked').value;
             if (reminderText) {
                 const newId = remindersData.length > 0 ? Math.max(...remindersData.map(r => r.id)) + 1 : 1;
-                remindersData.push({ id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [] });
+                const newReminder = { id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [] };
+                remindersData.push(newReminder);
+                logActivity('created', newReminder);
                 saveDataToFirebase();
                 addReminderForm.reset();
                 showToast('Reminder added!');
@@ -1211,7 +1277,7 @@
             if (completeBtn) {
                 const idToComplete = parseInt(completeBtn.dataset.id);
                 const reminder = remindersData.find(r => r.id === idToComplete);
-                if (reminder) { reminder.status = 'completed'; saveDataToFirebase(); showToast('Reminder marked as complete.'); }
+                if (reminder) { reminder.status = 'completed'; logActivity('completed', reminder); saveDataToFirebase(); showToast('Reminder marked as complete.'); }
             }
             const deleteBtn = e.target.closest('.delete-btn-reminder');
             if (deleteBtn) {
@@ -1231,6 +1297,7 @@
                     const newGapId = gapsData.length > 0 ? Math.max(...gapsData.map(item => item.id)) + 1 : 1;
                     const today = new Date().toISOString().split('T')[0];
                     gapsData.push({ id: newGapId, date: today, gap: reminder.text, action: '', owner: '', status: 'Not Started', notes: `Escalated from a ${reminder.priority} priority reminder.` });
+                    logActivity('escalated', reminder);
                     remindersData.splice(reminderIndex, 1);
                     saveDataToFirebase();
                     showToast('Reminder escalated to a Gap.');
