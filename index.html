@@ -230,6 +230,10 @@
 
         <!-- Reminders Content -->
         <div id="reminders-content" class="hidden">
+            <div class="flex justify-end mb-2">
+                <button id="enable-alerts-btn" class="text-xs font-medium px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300">Enable browser alerts</button>
+            </div>
+            <div id="reminder-alerts" class="hidden mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"></div>
             <div id="reminders-dashboard" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
             <div id="reminder-progress" class="bg-white p-6 shadow-md rounded-lg mb-8"></div>
             <div class="bg-white p-6 shadow-md rounded-lg">
@@ -239,7 +243,7 @@
                         <label for="new-reminder-text" class="block text-sm font-medium text-gray-700">Reminder</label>
                         <input type="text" id="new-reminder-text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Follow up with the warehouse team" required>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label for="new-reminder-priority" class="block text-sm font-medium text-gray-700">Priority</label>
                             <select id="new-reminder-priority" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm">
@@ -249,11 +253,15 @@
                             </select>
                         </div>
                         <div>
+                            <label for="new-reminder-deadline" class="block text-sm font-medium text-gray-700">Deadline <span class="text-gray-400 font-normal">(optional)</span></label>
+                            <input type="date" id="new-reminder-deadline" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm">
+                        </div>
+                        <div>
                             <label class="block text-sm font-medium text-gray-700">Category</label>
                             <div class="mt-2 flex space-x-4">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="reminder-category" value="shipment" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300" checked>
-                                    <span class="ml-2">Shipment Related</span>
+                                    <span class="ml-2">Shipment</span>
                                 </label>
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="reminder-category" value="clerical" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300">
@@ -481,6 +489,8 @@
         const pendingLowList = document.getElementById('pending-low');
         const completedRemindersList = document.getElementById('completed-reminders-list');
         const reminderProgressEl = document.getElementById('reminder-progress');
+        const reminderAlertsEl = document.getElementById('reminder-alerts');
+        const enableAlertsBtn = document.getElementById('enable-alerts-btn');
         const gapSubTabActive = document.getElementById('gap-sub-tab-active');
         const gapSubTabCompleted = document.getElementById('gap-sub-tab-completed');
         const tabSchedule = document.getElementById('tab-schedule');
@@ -656,6 +666,44 @@
             `;
         };
 
+        // Days from today until a 'YYYY-MM-DD' date (negative = overdue). null if no date.
+        const daysUntil = (dateStr) => {
+            if (!dateStr) return null;
+            const parts = dateStr.split('-').map(Number);
+            if (parts.length !== 3) return null;
+            const due = new Date(parts[0], parts[1] - 1, parts[2]);
+            const now = new Date(); now.setHours(0, 0, 0, 0);
+            return Math.round((due - now) / 86400000);
+        };
+
+        const notifiedDeadlineIds = new Set(); // avoid repeat notifications within a session
+
+        const renderReminderAlerts = () => {
+            const pending = remindersData.filter(r => r.status === 'pending' && r.deadline);
+            const overdue = pending.filter(r => daysUntil(r.deadline) < 0);
+            const dueToday = pending.filter(r => daysUntil(r.deadline) === 0);
+            if (overdue.length === 0 && dueToday.length === 0) {
+                reminderAlertsEl.classList.add('hidden');
+                reminderAlertsEl.innerHTML = '';
+            } else {
+                const parts = [];
+                if (overdue.length) parts.push(`<strong>${overdue.length}</strong> overdue`);
+                if (dueToday.length) parts.push(`<strong>${dueToday.length}</strong> due today`);
+                reminderAlertsEl.innerHTML = `\u26A0 ${parts.join(' and ')}. Check the High/Medium/Low columns below.`;
+                reminderAlertsEl.classList.remove('hidden');
+            }
+            // Optional browser notifications (only while this tab is open, if permission granted)
+            if (('Notification' in window) && Notification.permission === 'granted') {
+                [...overdue, ...dueToday].forEach(r => {
+                    if (!notifiedDeadlineIds.has(r.id)) {
+                        notifiedDeadlineIds.add(r.id);
+                        const n = daysUntil(r.deadline);
+                        try { new Notification('Reminder deadline', { body: `${r.text} \u2014 ${n < 0 ? 'overdue' : 'due today'}` }); } catch (e) {}
+                    }
+                });
+            }
+        };
+
         // Record a dated reminder event for the daily progress report
         const logActivity = (type, reminder) => {
             if (!Array.isArray(activityLog)) activityLog = [];
@@ -824,6 +872,21 @@
                             <button type="submit" class="text-xs font-medium px-3 py-1 border border-transparent rounded-md shadow-sm text-white bg-[#0A174E] hover:bg-opacity-90">Add</button>
                         </form>
                     `;
+                    const createdHtml = reminder.createdAt
+                        ? `<div class="text-[11px] text-gray-400 mt-1">Created ${new Date(reminder.createdAt).toLocaleString()}</div>`
+                        : '';
+                    let deadlineHtml = '';
+                    if (reminder.deadline) {
+                        const n = daysUntil(reminder.deadline);
+                        let cls = 'bg-gray-100 text-gray-600', label = `Due ${reminder.deadline}`;
+                        if (!isCompletedList && n !== null) {
+                            if (n < 0) { cls = 'bg-red-100 text-red-800'; label = `Overdue (${reminder.deadline})`; }
+                            else if (n === 0) { cls = 'bg-orange-100 text-orange-800'; label = `Due today`; }
+                            else if (n <= 2) { cls = 'bg-yellow-100 text-yellow-800'; label = `Due in ${n} day${n === 1 ? '' : 's'}`; }
+                            else { cls = 'bg-gray-100 text-gray-600'; label = `Due ${reminder.deadline}`; }
+                        }
+                        deadlineHtml = `<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cls}">${label}</span>`;
+                    }
                     li.innerHTML = `
                         <div class="w-full">
                             <div class="flex flex-col gap-2">
@@ -831,6 +894,8 @@
                                     <span class="text-gray-800 ${isCompletedList ? 'line-through text-gray-500' : 'font-medium'}">${reminder.text}</span>
                                     <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isCompletedList ? 'bg-gray-100 text-gray-800' : priorityBadgeClasses[reminder.priority]}">${reminder.priority}</span>
                                     <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">${reminder.category || 'general'}</span>
+                                    ${deadlineHtml}
+                                    ${createdHtml}
                                 </div>
                                 ${actionButtons}
                             </div>
@@ -989,6 +1054,7 @@
             renderGapsTable();
             renderRemindersDashboard();
             renderReminderProgress();
+            renderReminderAlerts();
             renderReminders();
             renderSchedule();
             renderTemplates();
@@ -1267,14 +1333,25 @@
             }
         });
 
+        enableAlertsBtn.addEventListener('click', async () => {
+            if (!('Notification' in window)) { showToast('This browser does not support notifications.', true); return; }
+            if (Notification.permission === 'granted') { showToast('Alerts are already on for this tab.'); return; }
+            try {
+                const p = await Notification.requestPermission();
+                if (p === 'granted') { showToast('Alerts on. They show only while this tab is open.'); renderReminderAlerts(); }
+                else { showToast('Alerts not enabled.', true); }
+            } catch (e) { showToast('Could not enable alerts.', true); }
+        });
+
         addReminderForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const reminderText = document.getElementById('new-reminder-text').value;
             const priority = document.getElementById('new-reminder-priority').value;
             const category = document.querySelector('input[name="reminder-category"]:checked').value;
+            const deadline = document.getElementById('new-reminder-deadline').value; // '' or 'YYYY-MM-DD'
             if (reminderText) {
                 const newId = remindersData.length > 0 ? Math.max(...remindersData.map(r => r.id)) + 1 : 1;
-                const newReminder = { id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [] };
+                const newReminder = { id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [], createdAt: new Date().toISOString(), deadline: deadline || '' };
                 remindersData.push(newReminder);
                 logActivity('created', newReminder);
                 saveDataToFirebase();
