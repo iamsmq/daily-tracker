@@ -20,8 +20,14 @@
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
             color: var(--ink);
+            min-height: 100vh;
+            background:
+                radial-gradient(1100px 560px at 8% -8%, rgba(24,42,114,.22), transparent 60%),
+                radial-gradient(900px 520px at 105% 0%, rgba(245,208,66,.18), transparent 55%),
+                radial-gradient(820px 620px at 50% 120%, rgba(13,120,140,.16), transparent 60%),
+                linear-gradient(180deg, #eef2fb 0%, #e6ecf8 100%);
+            background-attachment: fixed;
         }
         [contenteditable=true]:empty:before {
             content: attr(placeholder);
@@ -82,6 +88,29 @@
         .shadow { box-shadow: var(--shadow-sm) !important; }
         .shadow-md { box-shadow: var(--shadow-md) !important; }
         .rounded-lg { border-radius: var(--radius) !important; }
+
+        /* Glassmorphism: frosted translucent panels over the colored backdrop */
+        .bg-white {
+            background-color: rgba(255,255,255,.62) !important;
+            -webkit-backdrop-filter: blur(12px) saturate(140%);
+            backdrop-filter: blur(12px) saturate(140%);
+        }
+        .rounded-lg.bg-white, .rounded-md.bg-white {
+            border: 1px solid rgba(255,255,255,.55);
+            box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,.55) !important;
+        }
+        /* keep tables crisp and fast: no stacked blur inside cells/rows */
+        tbody.bg-white, tr.bg-white, thead tr, tbody tr, td, th {
+            -webkit-backdrop-filter: none; backdrop-filter: none;
+        }
+        thead th { background: rgba(247,248,251,.6) !important; }
+        .tab-bar {
+            background: rgba(255,255,255,.55) !important;
+            -webkit-backdrop-filter: blur(12px) saturate(140%);
+            backdrop-filter: blur(12px) saturate(140%);
+            border: 1px solid rgba(255,255,255,.5) !important;
+        }
+        input, select, textarea { background-color: rgba(255,255,255,.72); }
 
         /* Buttons: quiet, responsive feedback */
         button { transition: background-color .15s ease, box-shadow .15s ease, transform .04s ease; }
