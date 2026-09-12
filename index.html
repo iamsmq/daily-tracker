@@ -1615,11 +1615,24 @@
                     const reminder = remindersData[reminderIndex];
                     const newGapId = gapsData.length > 0 ? Math.max(...gapsData.map(item => item.id)) + 1 : 1;
                     const today = new Date().toISOString().split('T')[0];
-                    gapsData.push({ id: newGapId, date: today, gap: reminder.text, action: '', owner: '', status: 'Not Started', notes: `Escalated from a ${reminder.priority} priority reminder.` });
+                    // Carry over the reminder's remarks, then mark the escalation.
+                    const carriedComments = (reminder.remarks || []).map(r => ({ text: r.text, timestamp: r.timestamp, done: !!r.done }));
+                    carriedComments.push({ text: `Escalated from a ${reminder.priority} priority reminder.`, timestamp: new Date().toISOString() });
+                    gapsData.push({
+                        id: newGapId,
+                        date: today,
+                        gap: reminder.text,
+                        action: '',
+                        responsible: '',
+                        accountable: '',
+                        status: 'Not Started',
+                        comments: carriedComments,
+                        notes: ''
+                    });
                     logActivity('escalated', reminder);
                     remindersData.splice(reminderIndex, 1);
                     saveDataToFirebase();
-                    showToast('Reminder escalated to a Gap.');
+                    showToast('Reminder escalated to a Gap, with its notes.');
                 }
             }
             const emailReminderBtn = e.target.closest('.email-btn-reminder');
