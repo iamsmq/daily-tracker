@@ -258,7 +258,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Category</label>
-                            <div class="mt-2 flex space-x-4">
+                            <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="reminder-category" value="shipment" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300" checked>
                                     <span class="ml-2">Shipment</span>
@@ -266,6 +266,10 @@
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="reminder-category" value="clerical" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300">
                                     <span class="ml-2">Clerical</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="reminder-category" value="notes" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300">
+                                    <span class="ml-2">Notes</span>
                                 </label>
                             </div>
                         </div>
@@ -861,11 +865,14 @@
                             <button class="complete-btn-reminder text-green-700 hover:text-green-900 font-medium text-xs py-1 px-2.5 rounded-md bg-green-100 hover:bg-green-200" data-id="${reminder.id}">Complete</button>
                         </div>`;
                     }
-                    const remarksHtml = (reminder.remarks || []).map(remark => `
-                        <li class="text-xs text-gray-600 mt-1 pl-2 border-l-2 border-gray-300">
-                            <span class="font-medium text-gray-700">${new Date(remark.timestamp).toLocaleString()}</span>: ${remark.text}
-                        </li>
-                    `).join('');
+                    const remarksHtml = (reminder.remarks || []).map((remark, idx) => {
+                        const done = !!remark.done;
+                        return `
+                        <li class="remark-item group flex items-start gap-2 text-xs mt-1 pl-2 border-l-2 ${done ? 'border-green-400' : 'border-gray-300'} cursor-pointer" data-reminder-id="${reminder.id}" data-remark-index="${idx}" title="Click to mark this remark as actioned / not actioned">
+                            <span class="mt-0.5 shrink-0 ${done ? 'text-green-600' : 'text-gray-300 group-hover:text-gray-400'}">${done ? '\u2713' : '\u25CB'}</span>
+                            <span class="${done ? 'line-through text-gray-400' : 'text-gray-600'}"><span class="font-medium ${done ? '' : 'text-gray-700'}">${new Date(remark.timestamp).toLocaleString()}</span>: ${remark.text}</span>
+                        </li>`;
+                    }).join('');
                     const addRemarkFormHtml = `
                         <form class="add-remark-form mt-2 flex gap-2" data-id="${reminder.id}">
                             <input type="text" class="remark-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-xs" placeholder="Add a status remark..." required>
@@ -1380,6 +1387,17 @@
         });
 
         document.getElementById('reminders-content').addEventListener('click', (e) => {
+            const remarkItem = e.target.closest('.remark-item');
+            if (remarkItem) {
+                const rid = parseInt(remarkItem.dataset.reminderId);
+                const idx = parseInt(remarkItem.dataset.remarkIndex);
+                const reminder = remindersData.find(r => r.id === rid);
+                if (reminder && reminder.remarks && reminder.remarks[idx]) {
+                    reminder.remarks[idx].done = !reminder.remarks[idx].done;
+                    saveDataToFirebase();
+                }
+                return;
+            }
             const completeBtn = e.target.closest('.complete-btn-reminder');
             if (completeBtn) {
                 const idToComplete = parseInt(completeBtn.dataset.id);
