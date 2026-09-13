@@ -70,6 +70,7 @@
             overflow-x: auto;
         }
         .tab-bar nav { gap: .2rem; }
+        @media (min-width: 768px) { .tab-bar nav { gap: .25rem; } }
         .tab-btn {
             border-radius: 9px;
             transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
@@ -143,6 +144,60 @@
         @media (prefers-reduced-motion: reduce) {
             *, .toast { animation: none !important; transition: none !important; }
         }
+
+        /* ---------- Dark theme ---------- */
+        body.theme-dark {
+            background:
+                radial-gradient(1100px 560px at 8% -8%, rgba(60,80,170,.28), transparent 60%),
+                radial-gradient(900px 520px at 105% 0%, rgba(245,208,66,.10), transparent 55%),
+                radial-gradient(820px 620px at 50% 120%, rgba(13,120,140,.18), transparent 60%),
+                linear-gradient(180deg, #0b1020 0%, #0a0e1c 100%);
+        }
+        body.theme-dark .bg-white {
+            background-color: rgba(22,28,48,.55) !important;
+        }
+        body.theme-dark .rounded-lg.bg-white,
+        body.theme-dark .rounded-md.bg-white {
+            border: 1px solid rgba(255,255,255,.10);
+            box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,.06) !important;
+        }
+        body.theme-dark .tab-bar {
+            background: rgba(22,28,48,.55) !important;
+            border-color: rgba(255,255,255,.10) !important;
+        }
+        body.theme-dark thead th { background: rgba(255,255,255,.05) !important; color: #c7d2fe; }
+        body.theme-dark input,
+        body.theme-dark select,
+        body.theme-dark textarea,
+        body.theme-dark [contenteditable] {
+            background-color: rgba(255,255,255,.06);
+            color: #e5e7eb;
+            border-color: rgba(255,255,255,.15);
+        }
+        body.theme-dark ::placeholder { color: #8390ad; }
+        body.theme-dark .text-\[\#0A174E\] { color: #c7d2fe !important; }
+        body.theme-dark .text-gray-900,
+        body.theme-dark .text-gray-800,
+        body.theme-dark .text-gray-700 { color: #e5e7eb !important; }
+        body.theme-dark .text-gray-600,
+        body.theme-dark .text-gray-500 { color: #9aa6bf !important; }
+        body.theme-dark .text-gray-400,
+        body.theme-dark .text-gray-300 { color: #6b7690 !important; }
+        /* keep chip/button text dark on their light chips */
+        body.theme-dark .bg-gray-100.text-gray-600,
+        body.theme-dark .bg-gray-100.text-gray-700,
+        body.theme-dark .bg-gray-100.text-gray-800,
+        body.theme-dark .bg-gray-200.text-gray-700 { color: #374151 !important; }
+        body.theme-dark .border-gray-100,
+        body.theme-dark .border-gray-200,
+        body.theme-dark .border-gray-300 { border-color: rgba(255,255,255,.12) !important; }
+        body.theme-dark .bg-yellow-50 { background-color: rgba(234,179,8,.10) !important; }
+        body.theme-dark .bg-green-50 { background-color: rgba(34,197,94,.10) !important; }
+        body.theme-dark .bg-blue-50 { background-color: rgba(59,130,246,.10) !important; }
+        body.theme-dark .bg-red-50 { background-color: rgba(239,68,68,.12) !important; }
+        body.theme-dark #reminder-alerts { color: #fecaca !important; }
+        body.theme-dark ::-webkit-scrollbar-thumb { background: #39415c; }
+        body.theme-dark ::-webkit-scrollbar-thumb:hover { background: #4b5570; }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8">
@@ -172,7 +227,10 @@
                 </div>
                 <div class="text-right">
                     <p id="user-email" class="text-sm text-gray-600"></p>
-                    <button id="sign-out-btn" class="mt-1 text-sm font-medium text-[#0A174E] hover:underline">Sign out</button>
+                    <div class="mt-1 flex items-center justify-end gap-3">
+                        <button id="theme-toggle-btn" class="text-sm font-medium text-[#0A174E] hover:underline" title="Toggle dark / light">Dark mode</button>
+                        <button id="sign-out-btn" class="text-sm font-medium text-[#0A174E] hover:underline">Sign out</button>
+                    </div>
                 </div>
             </div>
             <!-- One-time setup helper: your UID for the Firestore rule -->
@@ -185,18 +243,20 @@
             </div>
         </header>
 
-        <!-- Main Tab Navigation -->
-        <div class="tab-bar mb-6">
-            <nav class="flex" aria-label="Tabs">
-                <button id="tab-today" class="tab-btn active whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Today</button>
-                <button id="tab-gaps" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Gaps Tracker</button>
-                <button id="tab-reminders" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Reminders</button>
-                <button id="tab-schedule" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Schedule</button>
-                <button id="tab-templates" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Templates</button>
-                <button id="tab-directory" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Directory</button>
-                <button id="tab-claims" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Claims</button>
+        <!-- Sidebar navigation + main content -->
+        <div class="flex flex-col md:flex-row gap-6 items-start">
+        <aside class="tab-bar w-full md:w-52 shrink-0 md:sticky md:top-6">
+            <nav class="flex md:flex-col" aria-label="Tabs">
+                <button id="tab-today" class="tab-btn active text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Today</button>
+                <button id="tab-gaps" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Gaps Tracker</button>
+                <button id="tab-reminders" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Reminders</button>
+                <button id="tab-schedule" class="tab-btn hidden text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Schedule</button>
+                <button id="tab-templates" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Templates</button>
+                <button id="tab-directory" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Directory</button>
+                <button id="tab-claims" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Claims</button>
             </nav>
-        </div>
+        </aside>
+        <main class="flex-grow min-w-0 w-full">
 
         <!-- Today Content -->
         <div id="today-content">
@@ -494,6 +554,8 @@
                 </table>
             </div>
         </div>
+        </main>
+        </div>
     </div>
 
     <script type="module">
@@ -650,6 +712,22 @@
         });
 
         signOutBtn.addEventListener('click', () => signOut(auth));
+
+        // Theme (dark / light) with safe persistence
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const applyTheme = (mode) => {
+            const dark = mode === 'dark';
+            document.body.classList.toggle('theme-dark', dark);
+            themeToggleBtn.textContent = dark ? 'Light mode' : 'Dark mode';
+        };
+        let savedTheme = 'light';
+        try { savedTheme = localStorage.getItem('trackerTheme') || 'light'; } catch (e) {}
+        applyTheme(savedTheme);
+        themeToggleBtn.addEventListener('click', () => {
+            const next = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
+            applyTheme(next);
+            try { localStorage.setItem('trackerTheme', next); } catch (e) {}
+        });
 
         copyUidBtn.addEventListener('click', async () => {
             try {
@@ -1273,7 +1351,7 @@
                             <p class="text-sm text-gray-500 mt-1">Open gaps</p>
                         </div>
                     </div>
-                    <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4" data-goto="schedule" role="button">
+                    <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4">
                         <svg viewBox="0 0 80 80" class="h-16 w-16 shrink-0 -rotate-90">
                             <circle cx="40" cy="40" r="${R}" fill="none" stroke="#e5e7eb" stroke-width="8"/>
                             <circle cx="40" cy="40" r="${R}" fill="none" stroke="#0A174E" stroke-width="8" stroke-linecap="round" stroke-dasharray="${dash}"/>
