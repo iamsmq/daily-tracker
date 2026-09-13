@@ -188,13 +188,19 @@
         <!-- Main Tab Navigation -->
         <div class="tab-bar mb-6">
             <nav class="flex" aria-label="Tabs">
-                <button id="tab-gaps" class="tab-btn active whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Gaps Tracker</button>
+                <button id="tab-today" class="tab-btn active whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Today</button>
+                <button id="tab-gaps" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Gaps Tracker</button>
                 <button id="tab-reminders" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Reminders</button>
                 <button id="tab-schedule" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Schedule</button>
                 <button id="tab-templates" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Templates</button>
                 <button id="tab-directory" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Directory</button>
                 <button id="tab-claims" class="tab-btn whitespace-nowrap py-2.5 px-5 font-medium text-sm focus:outline-none">Claims</button>
             </nav>
+        </div>
+
+        <!-- Today Content -->
+        <div id="today-content">
+            <div id="today-body"></div>
         </div>
 
         <!-- Gaps Tracker Content -->
@@ -405,7 +411,10 @@
                     </div>
                 </form>
             </div>
-            <div id="directory-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start"></div>
+            <div class="mb-4">
+                <input type="text" id="contact-search" class="block w-full max-w-md rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Search by name...">
+            </div>
+            <div id="directory-list" class="space-y-3"></div>
         </div>
 
         <!-- Claims Approval Content -->
@@ -513,6 +522,7 @@
         let templatesData = []; // [{ id, title, body }]
         let claimsData = []; // [{ id, date, location, expenseFor, amount }]
         let contactsData = []; // [{ id, name, role, phone, email, comments:[{text,timestamp,done}] }]
+        let contactSearch = '';
         let renderedContactSig = '';
         let claimFilters = { search: '', location: 'All', from: '', to: '' };
         let activityLog = []; // [{ type: 'created'|'completed'|'escalated', priority, day: 'YYYY-MM-DD', ts }]
@@ -534,6 +544,9 @@
 
         // App DOM
         const tabGaps = document.getElementById('tab-gaps');
+        const tabToday = document.getElementById('tab-today');
+        const todayContent = document.getElementById('today-content');
+        const todayBody = document.getElementById('today-body');
         const tabReminders = document.getElementById('tab-reminders');
         const gapsContent = document.getElementById('gaps-content');
         const remindersContent = document.getElementById('reminders-content');
@@ -570,6 +583,7 @@
         const directoryContent = document.getElementById('directory-content');
         const directoryList = document.getElementById('directory-list');
         const addContactForm = document.getElementById('add-contact-form');
+        const contactSearchEl = document.getElementById('contact-search');
         const tabClaims = document.getElementById('tab-claims');
         const claimsContent = document.getElementById('claims-content');
         const addClaimForm = document.getElementById('add-claim-form');
@@ -1077,13 +1091,16 @@
         const fmtAmount = (n) => (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         const renderContacts = () => {
-            // Rebuild when the set of contacts or their comments changes; otherwise just refresh field values.
-            const sig = contactsData.map(c => `${c.id}:${(c.comments || []).length}:${(c.comments || []).map(x => x.done ? 1 : 0).join('')}`).join('|');
+            const term = contactSearch.trim().toLowerCase();
+            const visible = contactsData.filter(c => !term || (c.name || '').toLowerCase().includes(term));
+            // Rebuild when the search, the set of contacts, or their comments change; otherwise refresh field values.
+            const sig = term + '#' + visible.map(c => `${c.id}:${(c.comments || []).length}:${(c.comments || []).map(x => x.done ? 1 : 0).join('')}`).join('|');
             if (sig !== renderedContactSig) {
-                if (contactsData.length === 0) {
-                    directoryList.innerHTML = `<p class="col-span-full text-gray-500 p-4 bg-white rounded-md shadow-sm">No contacts yet. Add one above.</p>`;
+                if (visible.length === 0) {
+                    const msg = contactsData.length === 0 ? 'No contacts yet. Add one above.' : 'No contacts match your search.';
+                    directoryList.innerHTML = `<p class="text-gray-500 p-4 bg-white rounded-md shadow-sm">${msg}</p>`;
                 } else {
-                    directoryList.innerHTML = contactsData.map(c => {
+                    directoryList.innerHTML = visible.map(c => {
                         const commentsHtml = (c.comments || []).map((cm, idx) => {
                             const done = !!cm.done;
                             return `
@@ -1094,13 +1111,15 @@
                         }).join('');
                         return `
                         <div class="bg-white p-4 rounded-md shadow-sm" data-id="${c.id}">
-                            <div class="flex items-center gap-2 mb-2">
-                                <input type="text" class="contact-field flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm font-semibold text-[#0A174E]" data-id="${c.id}" data-field="name" placeholder="Name">
-                                <button class="delete-contact text-xs font-medium px-3 py-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200" data-id="${c.id}">Delete</button>
+                            <div class="flex items-start gap-2">
+                                <div class="flex-grow grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                                    <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm font-semibold text-[#0A174E]" data-id="${c.id}" data-field="name" placeholder="Name">
+                                    <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" data-id="${c.id}" data-field="role" placeholder="Role / Company">
+                                    <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" data-id="${c.id}" data-field="phone" placeholder="Phone">
+                                    <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" data-id="${c.id}" data-field="email" placeholder="Email">
+                                </div>
+                                <button class="delete-contact shrink-0 text-xs font-medium px-3 py-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200" data-id="${c.id}">Delete</button>
                             </div>
-                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm mb-1" data-id="${c.id}" data-field="role" placeholder="Role / Company">
-                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm mb-1" data-id="${c.id}" data-field="phone" placeholder="Phone">
-                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" data-id="${c.id}" data-field="email" placeholder="Email">
                             <div class="mt-3 pt-2 border-t border-gray-100">
                                 <p class="text-xs font-medium text-gray-500 mb-1">Notes &amp; tasks discussed</p>
                                 <ul class="space-y-1">${commentsHtml}</ul>
@@ -1170,7 +1189,127 @@
             claimsCountEl.textContent = rows.length;
         };
 
+        const renderToday = () => {
+            const now = new Date();
+            const hour = now.getHours();
+            const greeting = hour < 12 ? 'Good morning' : (hour < 18 ? 'Good afternoon' : 'Good evening');
+            const dateStr = now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+            // Reminders due today / overdue
+            const pending = remindersData.filter(r => r.status === 'pending');
+            const withDeadline = pending.filter(r => r.deadline);
+            const overdue = withDeadline.filter(r => daysUntil(r.deadline) < 0).sort((a, b) => daysUntil(a.deadline) - daysUntil(b.deadline));
+            const dueToday = withDeadline.filter(r => daysUntil(r.deadline) === 0);
+            const attention = [...overdue, ...dueToday];
+
+            // Schedule progress (of slots that have a plan, how many are ticked today)
+            const doneMap = (scheduleStatus.date === todayStr()) ? (scheduleStatus.done || {}) : {};
+            const planned = SLOTS.filter(s => (scheduleData[s.key] || '').trim());
+            const donePlanned = planned.filter(s => doneMap[s.key]).length;
+            const frac = planned.length ? donePlanned / planned.length : 0;
+            const R = 34, C = 2 * Math.PI * R;
+            const dash = `${(frac * C).toFixed(1)} ${C.toFixed(1)}`;
+            // Current slot
+            const nowMin = hour * 60 + now.getMinutes();
+            const curSlot = SLOTS.find(s => { const [h, m] = s.key.split(':').map(Number); const st = h * 60 + m; return nowMin >= st && nowMin < st + 30; });
+            const curPlan = curSlot ? (scheduleData[curSlot.key] || '').trim() : '';
+
+            // Open gaps (not completed)
+            const openGaps = gapsData.filter(g => g.status !== 'Implemented');
+
+            // Claims today
+            const claimsToday = claimsData.filter(c => c.date === todayStr());
+            const claimsTodaySum = claimsToday.reduce((s, c) => s + (Number(c.amount) || 0), 0);
+
+            const badge = (r) => {
+                const n = daysUntil(r.deadline);
+                if (n < 0) return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Overdue</span>`;
+                return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Due today</span>`;
+            };
+            const prioDot = { High: 'bg-red-500', Medium: 'bg-yellow-500', Low: 'bg-green-500' };
+
+            const icon = {
+                bell: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M14.9 17.1a3 3 0 0 1-5.8 0m8.4-5.1V9a5.5 5.5 0 1 0-11 0v3l-1.6 3.2c-.3.7.2 1.4.9 1.4h12.4c.7 0 1.2-.7.9-1.4L17.5 12Z"/></svg>`,
+                flag: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21V4m0 0h11l-1.5 3.5L15 11H4"/></svg>`,
+                receipt: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 3v18l2-1 2 1 2-1 2 1 2-1 2 1V3l-2 1-2-1-2 1-2-1-2 1-2-1Zm3 6h6M9 13h6"/></svg>`
+            };
+
+            const attentionList = attention.length === 0
+                ? `<p class="text-sm text-gray-500 py-6 text-center">Nothing due today. You're clear.</p>`
+                : attention.slice(0, 8).map(r => `
+                    <div class="flex items-center gap-3 py-2 border-b border-white/40 last:border-0">
+                        <span class="h-2.5 w-2.5 rounded-full shrink-0 ${prioDot[r.priority] || 'bg-gray-400'}"></span>
+                        <span class="flex-grow text-sm text-gray-800 truncate">${r.text}</span>
+                        ${badge(r)}
+                    </div>`).join('');
+
+            const gapsList = openGaps.length === 0
+                ? `<p class="text-sm text-gray-500 py-6 text-center">No open gaps.</p>`
+                : openGaps.slice(0, 6).map(g => `
+                    <div class="flex items-center gap-3 py-2 border-b border-white/40 last:border-0">
+                        <span class="flex-grow text-sm text-gray-800 truncate">${g.gap || '(untitled)'}</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">${g.status || ''}</span>
+                    </div>`).join('');
+
+            todayBody.innerHTML = `
+                <div class="mb-6">
+                    <h1 class="text-3xl font-bold text-[#0A174E]">${greeting}.</h1>
+                    <p class="text-gray-500">${dateStr}</p>
+                </div>
+
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4" data-goto="reminders" role="button">
+                        <div class="h-12 w-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">${icon.bell}</div>
+                        <div>
+                            <p class="text-3xl font-bold text-[#0A174E] leading-none">${dueToday.length}</p>
+                            <p class="text-sm text-gray-500 mt-1">Due today</p>
+                            ${overdue.length ? `<p class="text-xs font-medium text-red-600 mt-0.5">${overdue.length} overdue</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4" data-goto="gaps" role="button">
+                        <div class="h-12 w-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">${icon.flag}</div>
+                        <div>
+                            <p class="text-3xl font-bold text-[#0A174E] leading-none">${openGaps.length}</p>
+                            <p class="text-sm text-gray-500 mt-1">Open gaps</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4" data-goto="schedule" role="button">
+                        <svg viewBox="0 0 80 80" class="h-16 w-16 shrink-0 -rotate-90">
+                            <circle cx="40" cy="40" r="${R}" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                            <circle cx="40" cy="40" r="${R}" fill="none" stroke="#0A174E" stroke-width="8" stroke-linecap="round" stroke-dasharray="${dash}"/>
+                        </svg>
+                        <div>
+                            <p class="text-2xl font-bold text-[#0A174E] leading-none">${donePlanned}/${planned.length || 0}</p>
+                            <p class="text-sm text-gray-500 mt-1">Slots done</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4" data-goto="claims" role="button">
+                        <div class="h-12 w-12 rounded-xl bg-yellow-50 text-yellow-700 flex items-center justify-center shrink-0">${icon.receipt}</div>
+                        <div>
+                            <p class="text-3xl font-bold text-[#0A174E] leading-none">${claimsToday.length}</p>
+                            <p class="text-sm text-gray-500 mt-1">Claims today</p>
+                            ${claimsToday.length ? `<p class="text-xs font-medium text-gray-600 mt-0.5">${fmtAmount(claimsTodaySum)}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white rounded-lg shadow p-6">
+                        <h2 class="text-lg font-semibold text-[#0A174E] mb-3">Needs attention</h2>
+                        ${attentionList}
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-lg font-semibold text-[#0A174E] mb-2">Right now</h2>
+                        ${curSlot ? `<p class="text-sm text-gray-500">${curSlot.label}</p><p class="text-base text-gray-800 mt-1 mb-4">${curPlan || '<span class=\"text-gray-400\">No plan for this slot</span>'}</p>` : `<p class="text-sm text-gray-500 mb-4">Outside your planned hours.</p>`}
+                        <h2 class="text-lg font-semibold text-[#0A174E] mb-2 mt-4 pt-4 border-t border-white/40">Open gaps</h2>
+                        ${gapsList}
+                    </div>
+                </div>
+            `;
+        };
+
         const refreshUI = () => {
+            renderToday();
             renderGapsDashboard();
             renderGapsTable();
             renderRemindersDashboard();
@@ -1184,19 +1323,25 @@
         };
 
         const switchTab = (tab) => {
+            todayContent.classList.add('hidden');
             gapsContent.classList.add('hidden');
             remindersContent.classList.add('hidden');
             scheduleContent.classList.add('hidden');
             templatesContent.classList.add('hidden');
             claimsContent.classList.add('hidden');
             directoryContent.classList.add('hidden');
+            tabToday.classList.remove('active');
             tabGaps.classList.remove('active');
             tabReminders.classList.remove('active');
             tabSchedule.classList.remove('active');
             tabTemplates.classList.remove('active');
             tabClaims.classList.remove('active');
             tabDirectory.classList.remove('active');
-            if (tab === 'gaps') {
+            if (tab === 'today') {
+                todayContent.classList.remove('hidden');
+                tabToday.classList.add('active');
+                renderToday();
+            } else if (tab === 'gaps') {
                 gapsContent.classList.remove('hidden');
                 tabGaps.classList.add('active');
             } else if (tab === 'reminders') {
@@ -1239,6 +1384,12 @@
             renderGapsTable();
         };
 
+        todayBody.addEventListener('click', (e) => {
+            const card = e.target.closest('[data-goto]');
+            if (card) switchTab(card.dataset.goto);
+        });
+
+        tabToday.addEventListener('click', () => switchTab('today'));
         tabGaps.addEventListener('click', () => switchTab('gaps'));
         tabReminders.addEventListener('click', () => switchTab('reminders'));
         tabSchedule.addEventListener('click', () => switchTab('schedule'));
@@ -1325,6 +1476,11 @@
             document.getElementById('new-template-title').value = '';
             bodyEl.innerHTML = '';
             showToast('Template added.');
+        });
+
+        contactSearchEl.addEventListener('input', (e) => {
+            contactSearch = e.target.value;
+            renderContacts();
         });
 
         // Directory: add contact
@@ -1712,7 +1868,7 @@
         });
 
         // Initialize view (data sync starts after sign-in via onAuthStateChanged)
-        switchTab('gaps');
+        switchTab('today');
         switchGapsView('active');
         switchReminderTab('pending');
     </script>
