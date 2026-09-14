@@ -1294,6 +1294,9 @@
 
             // Open gaps (not completed)
             const openGaps = gapsData.filter(g => g.status !== 'Implemented');
+            const hp = pending.filter(r => r.priority === 'High').length;
+            const mp = pending.filter(r => r.priority === 'Medium').length;
+            const lp = pending.filter(r => r.priority === 'Low').length;
 
             // Claims today
             const claimsToday = claimsData.filter(c => c.date === todayStr());
@@ -1309,7 +1312,8 @@
             const icon = {
                 bell: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M14.9 17.1a3 3 0 0 1-5.8 0m8.4-5.1V9a5.5 5.5 0 1 0-11 0v3l-1.6 3.2c-.3.7.2 1.4.9 1.4h12.4c.7 0 1.2-.7.9-1.4L17.5 12Z"/></svg>`,
                 flag: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21V4m0 0h11l-1.5 3.5L15 11H4"/></svg>`,
-                receipt: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 3v18l2-1 2 1 2-1 2 1 2-1 2 1V3l-2 1-2-1-2 1-2-1-2 1-2-1Zm3 6h6M9 13h6"/></svg>`
+                receipt: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 3v18l2-1 2 1 2-1 2 1 2-1 2 1V3l-2 1-2-1-2 1-2-1-2 1-2-1Zm3 6h6M9 13h6"/></svg>`,
+                list: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 6h12M8 12h12M8 18h12M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>`
             };
 
             const attentionList = attention.length === 0
@@ -1351,14 +1355,12 @@
                             <p class="text-sm text-gray-500 mt-1">Open gaps</p>
                         </div>
                     </div>
-                    <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4">
-                        <svg viewBox="0 0 80 80" class="h-16 w-16 shrink-0 -rotate-90">
-                            <circle cx="40" cy="40" r="${R}" fill="none" stroke="#e5e7eb" stroke-width="8"/>
-                            <circle cx="40" cy="40" r="${R}" fill="none" stroke="#0A174E" stroke-width="8" stroke-linecap="round" stroke-dasharray="${dash}"/>
-                        </svg>
+                    <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4" data-goto="reminders" role="button">
+                        <div class="h-12 w-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">${icon.list}</div>
                         <div>
-                            <p class="text-2xl font-bold text-[#0A174E] leading-none">${donePlanned}/${planned.length || 0}</p>
-                            <p class="text-sm text-gray-500 mt-1">Slots done</p>
+                            <p class="text-3xl font-bold text-[#0A174E] leading-none">${pending.length}</p>
+                            <p class="text-sm text-gray-500 mt-1">Pending reminders</p>
+                            <p class="text-xs font-medium text-gray-600 mt-0.5"><span class="text-red-600">${hp} High</span> &middot; ${mp} Med &middot; ${lp} Low</p>
                         </div>
                     </div>
                     <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4" data-goto="claims" role="button">
