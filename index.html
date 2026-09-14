@@ -370,6 +370,10 @@
                             </div>
                         </div>
                     </div>
+                    <div id="awb-field">
+                        <label for="new-reminder-awb" class="block text-sm font-medium text-gray-700">Shipment AWB <span class="text-red-500">*</span></label>
+                        <input type="text" id="new-reminder-awb" class="mt-1 block w-full max-w-sm rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="AWB number (required for shipment)">
+                    </div>
                     <div class="flex justify-end">
                         <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0A174E] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F5D042]">Add Reminder</button>
                     </div>
@@ -463,6 +467,10 @@
                         <input type="text" id="new-contact-phone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Phone">
                     </div>
                     <div>
+                        <label for="new-contact-ext" class="block text-sm font-medium text-gray-700">Extension</label>
+                        <input type="text" id="new-contact-ext" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Ext.">
+                    </div>
+                    <div>
                         <label for="new-contact-email" class="block text-sm font-medium text-gray-700">Email</label>
                         <input type="text" id="new-contact-email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Email">
                     </div>
@@ -474,7 +482,7 @@
             <div class="mb-4">
                 <input type="text" id="contact-search" class="block w-full max-w-md rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Search by name...">
             </div>
-            <div id="directory-list" class="space-y-3"></div>
+            <div id="directory-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start"></div>
         </div>
 
         <!-- Claims Approval Content -->
@@ -585,6 +593,7 @@
         let claimsData = []; // [{ id, date, location, expenseFor, amount }]
         let contactsData = []; // [{ id, name, role, phone, email, comments:[{text,timestamp,done}] }]
         let contactSearch = '';
+        let editingContactIds = new Set();
         let renderedContactSig = '';
         let claimFilters = { search: '', location: 'All', from: '', to: '' };
         let activityLog = []; // [{ type: 'created'|'completed'|'escalated', priority, day: 'YYYY-MM-DD', ts }]
@@ -1061,6 +1070,7 @@
                                     <span class="text-gray-800 ${isCompletedList ? 'line-through text-gray-500' : 'font-medium'}">${reminder.text}</span>
                                     <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isCompletedList ? 'bg-gray-100 text-gray-800' : priorityBadgeClasses[reminder.priority]}">${reminder.priority}</span>
                                     <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">${reminder.category || 'general'}</span>
+                                    ${(reminder.category === 'shipment' && reminder.awb) ? `<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">AWB ${reminder.awb}</span>` : ''}
                                     ${deadlineHtml}
                                     ${createdHtml}
                                 </div>
@@ -1171,14 +1181,16 @@
         const renderContacts = () => {
             const term = contactSearch.trim().toLowerCase();
             const visible = contactsData.filter(c => !term || (c.name || '').toLowerCase().includes(term));
-            // Rebuild when the search, the set of contacts, or their comments change; otherwise refresh field values.
-            const sig = term + '#' + visible.map(c => `${c.id}:${(c.comments || []).length}:${(c.comments || []).map(x => x.done ? 1 : 0).join('')}`).join('|');
+            const sig = term + '#' + visible.map(c => `${c.id}:${editingContactIds.has(c.id) ? 'E' : ''}:${(c.comments || []).length}:${(c.comments || []).map(x => x.done ? 1 : 0).join('')}`).join('|');
+            const pencil = `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 4.5l3 3L8 19l-3.5.5L5 16 16.5 4.5Z"/></svg>`;
+            const check = `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
             if (sig !== renderedContactSig) {
                 if (visible.length === 0) {
                     const msg = contactsData.length === 0 ? 'No contacts yet. Add one above.' : 'No contacts match your search.';
-                    directoryList.innerHTML = `<p class="text-gray-500 p-4 bg-white rounded-md shadow-sm">${msg}</p>`;
+                    directoryList.innerHTML = `<p class="sm:col-span-2 lg:col-span-4 text-gray-500 p-4 bg-white rounded-md shadow-sm">${msg}</p>`;
                 } else {
                     directoryList.innerHTML = visible.map(c => {
+                        const editing = editingContactIds.has(c.id);
                         const commentsHtml = (c.comments || []).map((cm, idx) => {
                             const done = !!cm.done;
                             return `
@@ -1187,23 +1199,31 @@
                                 <span class="${done ? 'line-through text-gray-400' : 'text-gray-600'}"><span class="font-medium ${done ? '' : 'text-gray-700'}">${new Date(cm.timestamp).toLocaleString()}</span>: ${cm.text}</span>
                             </li>`;
                         }).join('');
+
+                        const fieldsHtml = editing ? `
+                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm font-semibold text-[#0A174E] mb-1" data-id="${c.id}" data-field="name" placeholder="Name">
+                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm mb-1" data-id="${c.id}" data-field="role" placeholder="Role / Company">
+                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm mb-1" data-id="${c.id}" data-field="phone" placeholder="Phone">
+                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm mb-1" data-id="${c.id}" data-field="ext" placeholder="Extension">
+                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" data-id="${c.id}" data-field="email" placeholder="Email">
+                            <button class="delete-contact mt-2 text-xs font-medium px-3 py-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200" data-id="${c.id}">Delete contact</button>
+                        ` : `
+                            <p class="text-sm font-semibold text-[#0A174E] pr-6 break-words">${c.name || '(no name)'}</p>
+                            ${c.role ? `<p class="text-xs text-gray-600 mt-0.5 break-words">${c.role}</p>` : ''}
+                            ${(c.phone || c.ext) ? `<p class="text-xs text-gray-600 mt-0.5">${c.phone || ''}${c.ext ? `${c.phone ? ' &middot; ' : ''}ext ${c.ext}` : ''}</p>` : ''}
+                            ${c.email ? `<p class="text-xs text-gray-600 break-all">${c.email}</p>` : ''}
+                        `;
+
                         return `
-                        <div class="bg-white p-4 rounded-md shadow-sm" data-id="${c.id}">
-                            <div class="flex items-start gap-2">
-                                <div class="flex-grow grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                                    <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm font-semibold text-[#0A174E]" data-id="${c.id}" data-field="name" placeholder="Name">
-                                    <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" data-id="${c.id}" data-field="role" placeholder="Role / Company">
-                                    <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" data-id="${c.id}" data-field="phone" placeholder="Phone">
-                                    <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" data-id="${c.id}" data-field="email" placeholder="Email">
-                                </div>
-                                <button class="delete-contact shrink-0 text-xs font-medium px-3 py-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200" data-id="${c.id}">Delete</button>
-                            </div>
+                        <div class="bg-white p-4 rounded-md shadow-sm relative" data-id="${c.id}">
+                            <button class="edit-contact absolute top-2 right-2 p-1 rounded-md ${editing ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:text-[#0A174E] hover:bg-gray-100'}" data-id="${c.id}" title="${editing ? 'Done' : 'Edit'}">${editing ? check : pencil}</button>
+                            ${fieldsHtml}
                             <div class="mt-3 pt-2 border-t border-gray-100">
                                 <p class="text-xs font-medium text-gray-500 mb-1">Notes &amp; tasks discussed</p>
                                 <ul class="space-y-1">${commentsHtml}</ul>
                                 <form class="add-contact-comment-form mt-2 flex gap-2" data-id="${c.id}">
                                     <input type="text" class="contact-comment-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-xs" placeholder="Add a note / task..." required>
-                                    <button type="submit" class="text-xs font-medium px-3 py-1 border border-transparent rounded-md shadow-sm text-white bg-[#0A174E] hover:bg-opacity-90">Add</button>
+                                    <button type="submit" class="text-xs font-medium px-2 py-1 border border-transparent rounded-md shadow-sm text-white bg-[#0A174E] hover:bg-opacity-90">Add</button>
                                 </form>
                             </div>
                         </div>`;
@@ -1574,6 +1594,7 @@
                 name: name,
                 role: document.getElementById('new-contact-role').value,
                 phone: document.getElementById('new-contact-phone').value,
+                ext: document.getElementById('new-contact-ext').value,
                 email: document.getElementById('new-contact-email').value,
                 comments: []
             });
@@ -1584,6 +1605,13 @@
 
         // Directory: strike a note, or delete a contact
         directoryList.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-contact');
+            if (editBtn) {
+                const cid = parseInt(editBtn.dataset.id);
+                if (editingContactIds.has(cid)) editingContactIds.delete(cid); else editingContactIds.add(cid);
+                renderContacts();
+                return;
+            }
             const commentItem = e.target.closest('.contact-comment-item');
             if (commentItem) {
                 const cid = parseInt(commentItem.dataset.id);
@@ -1780,19 +1808,35 @@
             } catch (e) { showToast('Could not enable alerts.', true); }
         });
 
+        // Show the AWB field only for shipment reminders, and require it there.
+        const awbField = document.getElementById('awb-field');
+        const syncAwbVisibility = () => {
+            const cat = document.querySelector('input[name="reminder-category"]:checked');
+            awbField.style.display = (cat && cat.value === 'shipment') ? '' : 'none';
+        };
+        document.querySelectorAll('input[name="reminder-category"]').forEach(r => r.addEventListener('change', syncAwbVisibility));
+        syncAwbVisibility();
+
         addReminderForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const reminderText = document.getElementById('new-reminder-text').value;
             const priority = document.getElementById('new-reminder-priority').value;
             const category = document.querySelector('input[name="reminder-category"]:checked').value;
             const deadline = document.getElementById('new-reminder-deadline').value; // '' or 'YYYY-MM-DD'
+            const awb = document.getElementById('new-reminder-awb').value.trim();
+            if (category === 'shipment' && !awb) {
+                showToast('Shipment reminders require an AWB number.', true);
+                document.getElementById('new-reminder-awb').focus();
+                return;
+            }
             if (reminderText) {
                 const newId = remindersData.length > 0 ? Math.max(...remindersData.map(r => r.id)) + 1 : 1;
-                const newReminder = { id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [], createdAt: new Date().toISOString(), deadline: deadline || '' };
+                const newReminder = { id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [], createdAt: new Date().toISOString(), deadline: deadline || '', awb: category === 'shipment' ? awb : '' };
                 remindersData.push(newReminder);
                 logActivity('created', newReminder);
                 saveDataToFirebase();
                 addReminderForm.reset();
+                syncAwbVisibility();
                 showToast('Reminder added!');
             }
         });
