@@ -371,6 +371,10 @@
                                     <input type="radio" name="reminder-category" value="notes" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300">
                                     <span class="ml-2">Notes</span>
                                 </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="reminder-category" value="recurring" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300">
+                                    <span class="ml-2">Recurring</span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -1044,8 +1048,8 @@
                     const remarksHtml = (reminder.remarks || []).map((remark, idx) => {
                         const done = !!remark.done;
                         return `
-                        <li class="remark-item group flex items-start gap-2 text-xs mt-1 pl-2 border-l-2 ${done ? 'border-green-400' : 'border-gray-300'} cursor-pointer" data-reminder-id="${reminder.id}" data-remark-index="${idx}" title="Click to mark this remark as actioned / not actioned">
-                            <span class="mt-0.5 shrink-0 ${done ? 'text-green-600' : 'text-gray-300 group-hover:text-gray-400'}">${done ? '\u2713' : '\u25CB'}</span>
+                        <li class="flex items-start gap-2 text-xs mt-1 pl-2 border-l-2 ${done ? 'border-green-400' : 'border-gray-300'}">
+                            <input type="checkbox" class="remark-checkbox mt-0.5 shrink-0 h-3.5 w-3.5 accent-[#0A174E] cursor-pointer" data-reminder-id="${reminder.id}" data-remark-index="${idx}" ${done ? 'checked' : ''} title="Mark actioned">
                             <span class="${done ? 'line-through text-gray-400' : 'text-gray-600'}"><span class="font-medium ${done ? '' : 'text-gray-700'}">${new Date(remark.timestamp).toLocaleString()}</span>: ${remark.text}</span>
                         </li>`;
                     }).join('');
@@ -1201,8 +1205,8 @@
                         const commentsHtml = (c.comments || []).map((cm, idx) => {
                             const done = !!cm.done;
                             return `
-                            <li class="contact-comment-item group flex items-start gap-2 text-xs mt-1 pl-2 border-l-2 ${done ? 'border-green-400' : 'border-gray-300'} cursor-pointer" data-id="${c.id}" data-comment-index="${idx}" title="Click to mark this note as actioned / not actioned">
-                                <span class="mt-0.5 shrink-0 ${done ? 'text-green-600' : 'text-gray-300 group-hover:text-gray-400'}">${done ? '\u2713' : '\u25CB'}</span>
+                            <li class="flex items-start gap-2 text-xs mt-1 pl-2 border-l-2 ${done ? 'border-green-400' : 'border-gray-300'}">
+                                <input type="checkbox" class="contact-comment-checkbox mt-0.5 shrink-0 h-3.5 w-3.5 accent-[#0A174E] cursor-pointer" data-id="${c.id}" data-comment-index="${idx}" ${done ? 'checked' : ''} title="Mark actioned">
                                 <span class="${done ? 'line-through text-gray-400' : 'text-gray-600'}"><span class="font-medium ${done ? '' : 'text-gray-700'}">${new Date(cm.timestamp).toLocaleString()}</span>: ${cm.text}</span>
                             </li>`;
                         }).join('');
@@ -1619,13 +1623,13 @@
                 renderContacts();
                 return;
             }
-            const commentItem = e.target.closest('.contact-comment-item');
-            if (commentItem) {
-                const cid = parseInt(commentItem.dataset.id);
-                const idx = parseInt(commentItem.dataset.commentIndex);
+            const commentCb = e.target.closest('.contact-comment-checkbox');
+            if (commentCb) {
+                const cid = parseInt(commentCb.dataset.id);
+                const idx = parseInt(commentCb.dataset.commentIndex);
                 const c = contactsData.find(x => x.id === cid);
                 if (c && c.comments && c.comments[idx]) {
-                    c.comments[idx].done = !c.comments[idx].done;
+                    c.comments[idx].done = commentCb.checked;
                     saveDataToFirebase();
                 }
                 return;
@@ -1909,13 +1913,13 @@
         });
 
         document.getElementById('reminders-content').addEventListener('click', (e) => {
-            const remarkItem = e.target.closest('.remark-item');
-            if (remarkItem) {
-                const rid = parseInt(remarkItem.dataset.reminderId);
-                const idx = parseInt(remarkItem.dataset.remarkIndex);
+            const remarkCb = e.target.closest('.remark-checkbox');
+            if (remarkCb) {
+                const rid = parseInt(remarkCb.dataset.reminderId);
+                const idx = parseInt(remarkCb.dataset.remarkIndex);
                 const reminder = remindersData.find(r => r.id === rid);
                 if (reminder && reminder.remarks && reminder.remarks[idx]) {
-                    reminder.remarks[idx].done = !reminder.remarks[idx].done;
+                    reminder.remarks[idx].done = remarkCb.checked;
                     saveDataToFirebase();
                 }
                 return;
@@ -1924,7 +1928,19 @@
             if (completeBtn) {
                 const idToComplete = parseInt(completeBtn.dataset.id);
                 const reminder = remindersData.find(r => r.id === idToComplete);
-                if (reminder) { reminder.status = 'completed'; logActivity('completed', reminder); saveDataToFirebase(); showToast('Reminder marked as complete.'); }
+                if (reminder) {
+                    logActivity('completed', reminder);
+                    if (reminder.category === 'recurring') {
+                        if (!reminder.remarks) reminder.remarks = [];
+                        reminder.remarks.push({ text: 'Marked done', timestamp: new Date().toISOString(), done: false });
+                        saveDataToFirebase();
+                        showToast('Recurring reminder logged. It stays active.');
+                    } else {
+                        reminder.status = 'completed';
+                        saveDataToFirebase();
+                        showToast('Reminder marked as complete.');
+                    }
+                }
             }
             const deleteBtn = e.target.closest('.delete-btn-reminder');
             if (deleteBtn) {
