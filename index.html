@@ -8,25 +8,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --navy: #0A174E;
-            --navy-2: #182a72;
-            --gold: #F5D042;
+            --navy: #0F172A;        /* primary */
+            --navy-2: #4c1d95;      /* deep purple, for the header gradient */
+            --secondary: #7C3AED;   /* purple */
+            --accent: #22D3EE;      /* electric cyan */
+            --tertiary: #A78BFA;    /* light purple */
+            --gold: #22D3EE;        /* header accent line (repurposed to cyan) */
             --ink: #1f2937;
-            --bg: #eef1f6;
+            --bg: #EDE9FE;          /* lavender background */
             --line: #e6e8ef;
             --radius: 14px;
-            --shadow-sm: 0 1px 2px rgba(10,23,78,.05), 0 2px 6px -2px rgba(10,23,78,.08);
-            --shadow-md: 0 6px 22px -8px rgba(10,23,78,.18), 0 2px 8px -4px rgba(10,23,78,.10);
+            --shadow-sm: 0 1px 2px rgba(15,23,42,.05), 0 2px 6px -2px rgba(15,23,42,.08);
+            --shadow-md: 0 6px 22px -8px rgba(15,23,42,.18), 0 2px 8px -4px rgba(15,23,42,.10);
         }
         body {
             font-family: 'Inter', sans-serif;
             color: var(--ink);
             min-height: 100vh;
             background:
-                radial-gradient(1100px 560px at 8% -8%, rgba(24,42,114,.22), transparent 60%),
-                radial-gradient(900px 520px at 105% 0%, rgba(245,208,66,.18), transparent 55%),
-                radial-gradient(820px 620px at 50% 120%, rgba(13,120,140,.16), transparent 60%),
-                linear-gradient(180deg, #eef2fb 0%, #e6ecf8 100%);
+                radial-gradient(1100px 560px at 8% -8%, rgba(124,58,237,.20), transparent 60%),
+                radial-gradient(900px 520px at 105% 0%, rgba(34,211,238,.16), transparent 55%),
+                radial-gradient(820px 620px at 50% 120%, rgba(167,139,250,.20), transparent 60%),
+                linear-gradient(180deg, #EDE9FE 0%, #e7e1fb 100%);
             background-attachment: fixed;
         }
         [contenteditable=true]:empty:before {
@@ -148,9 +151,9 @@
         /* ---------- Dark theme ---------- */
         body.theme-dark {
             background:
-                radial-gradient(1100px 560px at 8% -8%, rgba(60,80,170,.28), transparent 60%),
-                radial-gradient(900px 520px at 105% 0%, rgba(245,208,66,.10), transparent 55%),
-                radial-gradient(820px 620px at 50% 120%, rgba(13,120,140,.18), transparent 60%),
+                radial-gradient(1100px 560px at 8% -8%, rgba(124,58,237,.30), transparent 60%),
+                radial-gradient(900px 520px at 105% 0%, rgba(34,211,238,.16), transparent 55%),
+                radial-gradient(820px 620px at 50% 120%, rgba(167,139,250,.18), transparent 60%),
                 linear-gradient(180deg, #0b1020 0%, #0a0e1c 100%);
         }
         body.theme-dark .bg-white {
@@ -175,7 +178,7 @@
             border-color: rgba(255,255,255,.15);
         }
         body.theme-dark ::placeholder { color: #8390ad; }
-        body.theme-dark .text-\[\#0A174E\] { color: #c7d2fe !important; }
+        body.theme-dark .text-\[\#0F172A\] { color: #c7d2fe !important; }
         body.theme-dark .text-gray-900,
         body.theme-dark .text-gray-800,
         body.theme-dark .text-gray-700 { color: #e5e7eb !important; }
@@ -208,9 +211,9 @@
     <!-- Login Screen -->
     <div id="login-screen" class="hidden min-h-[70vh] flex items-center justify-center">
         <div class="bg-white p-8 rounded-lg shadow-md text-center max-w-sm w-full">
-            <h1 class="text-2xl font-bold text-[#0A174E] mb-2">My daily tracker</h1>
+            <h1 class="text-2xl font-bold text-[#0F172A] mb-2">My daily tracker</h1>
             <p class="text-gray-600 mb-6">Sign in to access your data.</p>
-            <button id="sign-in-btn" class="w-full inline-flex justify-center items-center gap-2 py-2.5 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0A174E]">
+            <button id="sign-in-btn" class="w-full inline-flex justify-center items-center gap-2 py-2.5 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0F172A]">
                 <svg class="h-5 w-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                 Sign in with Google
             </button>
@@ -228,16 +231,16 @@
                 <div class="text-right">
                     <p id="user-email" class="text-sm text-gray-600"></p>
                     <div class="mt-1 flex items-center justify-end gap-3">
-                        <button id="theme-toggle-btn" class="text-sm font-medium text-[#0A174E] hover:underline" title="Toggle dark / light">Dark mode</button>
-                        <button id="sign-out-btn" class="text-sm font-medium text-[#0A174E] hover:underline">Sign out</button>
+                        <button id="theme-toggle-btn" class="text-sm font-medium text-[#0F172A] hover:underline" title="Toggle dark / light">Dark mode</button>
+                        <button id="sign-out-btn" class="text-sm font-medium text-[#0F172A] hover:underline">Sign out</button>
                     </div>
                 </div>
             </div>
             <!-- One-time setup helper: your UID for the Firestore rule -->
             <div id="uid-banner" class="mt-3 bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-gray-700 flex items-center justify-between gap-3 flex-wrap">
-                <span>Your account ID (for the Firestore rule): <code id="uid-value" class="font-mono text-[#0A174E] break-all"></code></span>
+                <span>Your account ID (for the Firestore rule): <code id="uid-value" class="font-mono text-[#0F172A] break-all"></code></span>
                 <div class="flex items-center gap-2">
-                    <button id="copy-uid-btn" class="text-xs font-medium px-3 py-1 rounded-md bg-[#0A174E] text-white hover:bg-opacity-90">Copy ID</button>
+                    <button id="copy-uid-btn" class="text-xs font-medium px-3 py-1 rounded-md bg-[#0F172A] text-white hover:bg-opacity-90">Copy ID</button>
                     <button id="hide-uid-btn" class="text-xs font-medium px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Hide</button>
                 </div>
             </div>
@@ -269,32 +272,32 @@
 
             <!-- Add New Gap form (moved to top) -->
             <div class="bg-white p-6 shadow-md rounded-lg mb-8">
-                <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Add New Gap</h2>
+                <h2 class="text-xl font-semibold text-[#0F172A] mb-4">Add New Gap</h2>
                 <form id="add-gap-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="lg:col-span-2">
                         <label for="new-gap" class="block text-sm font-medium text-gray-700">Gap</label>
-                        <input type="text" id="new-gap" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Gaps in performance" required>
+                        <input type="text" id="new-gap" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="e.g., Gaps in performance" required>
                     </div>
                     <div class="lg:col-span-2">
                         <label for="new-action" class="block text-sm font-medium text-gray-700">Corrective Action(s)</label>
-                        <textarea id="new-action" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Restructure routes..." required></textarea>
+                        <textarea id="new-action" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="e.g., Restructure routes..." required></textarea>
                     </div>
                     <div>
                         <label for="new-responsible" class="block text-sm font-medium text-gray-700">Responsible</label>
-                        <input type="text" id="new-responsible" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Who does the work">
+                        <input type="text" id="new-responsible" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="Who does the work">
                     </div>
                     <div>
                         <label for="new-accountable" class="block text-sm font-medium text-gray-700">Accountable</label>
-                        <input type="text" id="new-accountable" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Who owns the outcome">
+                        <input type="text" id="new-accountable" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="Who owns the outcome">
                     </div>
                     <div class="md:col-span-2 lg:col-span-4 flex justify-end">
-                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0A174E] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F5D042]">Add Item</button>
+                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0F172A] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7C3AED]">Add Item</button>
                     </div>
                 </form>
             </div>
 
             <div class="flex flex-wrap gap-4 mb-6">
-                 <button id="email-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm bg-[#F5D042] text-[#0A174E] font-semibold hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0A174E]">Copy Gaps Report</button>
+                 <button id="email-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm bg-[#22D3EE] text-[#0F172A] font-semibold hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0F172A]">Copy Gaps Report</button>
                  <button id="download-gaps-btn" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm bg-green-100 text-green-800 hover:bg-green-200">Download Completed Gaps (Excel)</button>
             </div>
 
@@ -313,14 +316,14 @@
                     </colgroup>
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">ID</th>
-                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Date</th>
-                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Gap</th>
-                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Corrective Actions &amp; Comments</th>
-                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Responsible</th>
-                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Accountable</th>
-                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Actions</th>
+                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0F172A] uppercase tracking-wider">ID</th>
+                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0F172A] uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0F172A] uppercase tracking-wider">Gap</th>
+                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0F172A] uppercase tracking-wider">Corrective Actions &amp; Comments</th>
+                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0F172A] uppercase tracking-wider">Responsible</th>
+                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0F172A] uppercase tracking-wider">Accountable</th>
+                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0F172A] uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-2 py-2 text-left text-xs font-medium text-[#0F172A] uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="tracker-table-body" class="bg-white divide-y divide-gray-200"></tbody>
@@ -337,16 +340,16 @@
             <div id="reminders-dashboard" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
             <div id="reminder-progress" class="bg-white p-6 shadow-md rounded-lg mb-8"></div>
             <div class="bg-white p-6 shadow-md rounded-lg">
-                <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Add New Reminder</h2>
+                <h2 class="text-xl font-semibold text-[#0F172A] mb-4">Add New Reminder</h2>
                 <form id="add-reminder-form" class="space-y-4">
                     <div>
                         <label for="new-reminder-text" class="block text-sm font-medium text-gray-700">Reminder</label>
-                        <input type="text" id="new-reminder-text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Follow up with the warehouse team" required>
+                        <input type="text" id="new-reminder-text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="e.g., Follow up with the warehouse team" required>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label for="new-reminder-priority" class="block text-sm font-medium text-gray-700">Priority</label>
-                            <select id="new-reminder-priority" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm">
+                            <select id="new-reminder-priority" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm">
                                 <option value="Low">Low</option>
                                 <option value="Medium" selected>Medium</option>
                                 <option value="High">High</option>
@@ -354,25 +357,25 @@
                         </div>
                         <div>
                             <label for="new-reminder-deadline" class="block text-sm font-medium text-gray-700">Deadline <span class="text-gray-400 font-normal">(optional)</span></label>
-                            <input type="date" id="new-reminder-deadline" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm">
+                            <input type="date" id="new-reminder-deadline" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Category</label>
                             <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1">
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="reminder-category" value="shipment" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300" checked>
+                                    <input type="radio" name="reminder-category" value="shipment" class="focus:ring-[#7C3AED] h-4 w-4 text-[#0F172A] border-gray-300" checked>
                                     <span class="ml-2">Shipment</span>
                                 </label>
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="reminder-category" value="clerical" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300">
+                                    <input type="radio" name="reminder-category" value="clerical" class="focus:ring-[#7C3AED] h-4 w-4 text-[#0F172A] border-gray-300">
                                     <span class="ml-2">Clerical</span>
                                 </label>
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="reminder-category" value="notes" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300">
+                                    <input type="radio" name="reminder-category" value="notes" class="focus:ring-[#7C3AED] h-4 w-4 text-[#0F172A] border-gray-300">
                                     <span class="ml-2">Notes</span>
                                 </label>
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="reminder-category" value="recurring" class="focus:ring-[#F5D042] h-4 w-4 text-[#0A174E] border-gray-300">
+                                    <input type="radio" name="reminder-category" value="recurring" class="focus:ring-[#7C3AED] h-4 w-4 text-[#0F172A] border-gray-300">
                                     <span class="ml-2">Recurring</span>
                                 </label>
                             </div>
@@ -380,10 +383,10 @@
                     </div>
                     <div id="awb-field">
                         <label for="new-reminder-awb" class="block text-sm font-medium text-gray-700">Shipment AWB <span class="text-red-500">*</span></label>
-                        <input type="text" id="new-reminder-awb" class="mt-1 block w-full max-w-sm rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="AWB number (required for shipment)">
+                        <input type="text" id="new-reminder-awb" class="mt-1 block w-full max-w-sm rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="AWB number (required for shipment)">
                     </div>
                     <div class="flex justify-end">
-                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0A174E] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F5D042]">Add Reminder</button>
+                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0F172A] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7C3AED]">Add Reminder</button>
                     </div>
                 </form>
             </div>
@@ -431,7 +434,7 @@
         <div id="schedule-content" class="hidden">
             <div class="bg-white p-6 shadow-md rounded-lg">
                 <div class="flex items-baseline justify-between flex-wrap gap-2 mb-1">
-                    <h2 class="text-xl font-semibold text-[#0A174E]">Daily Plan</h2>
+                    <h2 class="text-xl font-semibold text-[#0F172A]">Daily Plan</h2>
                     <button id="clear-schedule-btn" class="text-xs font-medium px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Clear all slots</button>
                 </div>
                 <p class="text-sm text-gray-500 mb-4">08:00 AM to 07:00 PM, half-hour slots. This schedule stays the same until you edit it.</p>
@@ -442,18 +445,18 @@
         <!-- Templates Content -->
         <div id="templates-content" class="hidden">
             <div class="bg-white p-6 shadow-md rounded-lg mb-8">
-                <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Add Template</h2>
+                <h2 class="text-xl font-semibold text-[#0F172A] mb-4">Add Template</h2>
                 <form id="add-template-form" class="space-y-4">
                     <div>
                         <label for="new-template-title" class="block text-sm font-medium text-gray-700">Title</label>
-                        <input type="text" id="new-template-title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Delay notification email" required>
+                        <input type="text" id="new-template-title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="e.g., Delay notification email" required>
                     </div>
                     <div>
                         <label for="new-template-body" class="block text-sm font-medium text-gray-700">Text</label>
-                        <div id="new-template-body" contenteditable="true" class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-1 focus:ring-[#F5D042] sm:text-sm px-3 py-2 min-h-[8rem] bg-white overflow-auto focus:outline-none" placeholder="Paste or type the template text. Formatting is kept."></div>
+                        <div id="new-template-body" contenteditable="true" class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] sm:text-sm px-3 py-2 min-h-[8rem] bg-white overflow-auto focus:outline-none" placeholder="Paste or type the template text. Formatting is kept."></div>
                     </div>
                     <div class="flex justify-end">
-                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0A174E] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F5D042]">Add Template</button>
+                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0F172A] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7C3AED]">Add Template</button>
                     </div>
                 </form>
             </div>
@@ -463,35 +466,35 @@
         <!-- Directory Content -->
         <div id="directory-content" class="hidden">
             <div class="bg-white p-6 shadow-md rounded-lg mb-8">
-                <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Add Contact</h2>
+                <h2 class="text-xl font-semibold text-[#0F172A] mb-4">Add Contact</h2>
                 <form id="add-contact-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label for="new-contact-name" class="block text-sm font-medium text-gray-700">Name</label>
-                        <input type="text" id="new-contact-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Full name" required>
+                        <input type="text" id="new-contact-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="Full name" required>
                     </div>
                     <div>
                         <label for="new-contact-role" class="block text-sm font-medium text-gray-700">Role / Company</label>
-                        <input type="text" id="new-contact-role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Fleet vendor">
+                        <input type="text" id="new-contact-role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="e.g., Fleet vendor">
                     </div>
                     <div>
                         <label for="new-contact-phone" class="block text-sm font-medium text-gray-700">Phone</label>
-                        <input type="text" id="new-contact-phone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Phone">
+                        <input type="text" id="new-contact-phone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="Phone">
                     </div>
                     <div>
                         <label for="new-contact-ext" class="block text-sm font-medium text-gray-700">Extension</label>
-                        <input type="text" id="new-contact-ext" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Ext.">
+                        <input type="text" id="new-contact-ext" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="Ext.">
                     </div>
                     <div>
                         <label for="new-contact-email" class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="text" id="new-contact-email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Email">
+                        <input type="text" id="new-contact-email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="Email">
                     </div>
                     <div class="md:col-span-2 lg:col-span-4 flex justify-end">
-                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0A174E] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F5D042]">Add Contact</button>
+                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0F172A] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7C3AED]">Add Contact</button>
                     </div>
                 </form>
             </div>
             <div class="mb-4">
-                <input type="text" id="contact-search" class="block w-full max-w-md rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="Search by name...">
+                <input type="text" id="contact-search" class="block w-full max-w-md rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="Search by name...">
             </div>
             <div id="directory-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start"></div>
         </div>
@@ -499,27 +502,27 @@
         <!-- Claims Approval Content -->
         <div id="claims-content" class="hidden">
             <div class="bg-white p-6 shadow-md rounded-lg mb-8">
-                <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Log Approved Claim</h2>
+                <h2 class="text-xl font-semibold text-[#0F172A] mb-4">Log Approved Claim</h2>
                 <form id="add-claim-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label for="new-claim-date" class="block text-sm font-medium text-gray-700">Date</label>
-                        <input type="date" id="new-claim-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" required>
+                        <input type="date" id="new-claim-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" required>
                     </div>
                     <div>
                         <label for="new-claim-location" class="block text-sm font-medium text-gray-700">Location</label>
-                        <input type="text" id="new-claim-location" list="claim-location-options" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Khamis Mushait" required>
+                        <input type="text" id="new-claim-location" list="claim-location-options" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="e.g., Khamis Mushait" required>
                         <datalist id="claim-location-options"></datalist>
                     </div>
                     <div>
                         <label for="new-claim-expense" class="block text-sm font-medium text-gray-700">Expense for</label>
-                        <input type="text" id="new-claim-expense" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="e.g., Fuel, vehicle repair" required>
+                        <input type="text" id="new-claim-expense" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="e.g., Fuel, vehicle repair" required>
                     </div>
                     <div>
                         <label for="new-claim-amount" class="block text-sm font-medium text-gray-700">Amount</label>
-                        <input type="number" step="0.01" min="0" id="new-claim-amount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] sm:text-sm" placeholder="0.00" required>
+                        <input type="number" step="0.01" min="0" id="new-claim-amount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="0.00" required>
                     </div>
                     <div class="md:col-span-2 lg:col-span-4 flex justify-end">
-                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0A174E] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F5D042]">Add Claim</button>
+                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0F172A] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7C3AED]">Add Claim</button>
                     </div>
                 </form>
             </div>
@@ -529,21 +532,21 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
                     <div class="lg:col-span-2">
                         <label for="claim-search" class="block text-xs font-medium text-gray-600 mb-1">Search (expense or location)</label>
-                        <input type="text" id="claim-search" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" placeholder="Type to filter...">
+                        <input type="text" id="claim-search" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-sm" placeholder="Type to filter...">
                     </div>
                     <div>
                         <label for="claim-location-filter" class="block text-xs font-medium text-gray-600 mb-1">Location</label>
-                        <select id="claim-location-filter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm">
+                        <select id="claim-location-filter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-sm">
                             <option value="All">All locations</option>
                         </select>
                     </div>
                     <div>
                         <label for="claim-date-from" class="block text-xs font-medium text-gray-600 mb-1">From date</label>
-                        <input type="date" id="claim-date-from" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm">
+                        <input type="date" id="claim-date-from" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-sm">
                     </div>
                     <div>
                         <label for="claim-date-to" class="block text-xs font-medium text-gray-600 mb-1">To date</label>
-                        <input type="date" id="claim-date-to" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm">
+                        <input type="date" id="claim-date-to" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-sm">
                     </div>
                 </div>
                 <div class="flex justify-end mt-3">
@@ -555,16 +558,16 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead>
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Date</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Location</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Expense for</th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-[#0A174E] uppercase tracking-wider">Amount</th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-[#0A174E] uppercase tracking-wider">Actions</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0F172A] uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0F172A] uppercase tracking-wider">Location</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#0F172A] uppercase tracking-wider">Expense for</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-[#0F172A] uppercase tracking-wider">Amount</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-[#0F172A] uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="claims-table-body" class="bg-white divide-y divide-gray-200"></tbody>
                     <tfoot>
-                        <tr class="bg-gray-50 font-semibold text-[#0A174E]">
+                        <tr class="bg-gray-50 font-semibold text-[#0F172A]">
                             <td class="px-6 py-3 text-sm" colspan="3">Total (<span id="claims-count">0</span> shown)</td>
                             <td class="px-6 py-3 text-sm text-right" id="claims-total">0.00</td>
                             <td></td>
@@ -685,7 +688,7 @@
 
         const showToast = (message, isError = false) => {
             const toast = document.createElement('div');
-            toast.className = `toast max-w-xs w-full p-4 rounded-md shadow-lg text-white ${isError ? 'bg-red-500' : 'bg-[#0A174E]'}`;
+            toast.className = `toast max-w-xs w-full p-4 rounded-md shadow-lg text-white ${isError ? 'bg-red-500' : 'bg-[#0F172A]'}`;
             toast.textContent = message;
             toastContainer.appendChild(toast);
             setTimeout(() => {
@@ -829,11 +832,11 @@
             const implemented = gapsData.filter(item => item.status === 'Implemented').length;
             const onHold = gapsData.filter(item => item.status === 'On Hold').length;
             dashboard.innerHTML = `
-                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-gray-500">Total Gaps</p><p class="text-3xl font-bold text-[#0A174E]">${total}</p></div>
-                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-gray-500">Not Started</p><p class="text-3xl font-bold text-[#0A174E]">${notStarted}</p></div>
-                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-yellow-600">In Progress</p><p class="text-3xl font-bold text-[#0A174E]">${inProgress}</p></div>
-                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-green-600">Implemented</p><p class="text-3xl font-bold text-[#0A174E]">${implemented}</p></div>
-                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-blue-600">On Hold</p><p class="text-3xl font-bold text-[#0A174E]">${onHold}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-gray-500">Total Gaps</p><p class="text-3xl font-bold text-[#0F172A]">${total}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-gray-500">Not Started</p><p class="text-3xl font-bold text-[#0F172A]">${notStarted}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-yellow-600">In Progress</p><p class="text-3xl font-bold text-[#0F172A]">${inProgress}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-green-600">Implemented</p><p class="text-3xl font-bold text-[#0F172A]">${implemented}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-blue-600">On Hold</p><p class="text-3xl font-bold text-[#0F172A]">${onHold}</p></div>
             `;
         };
 
@@ -843,10 +846,10 @@
             const medium = pending.filter(r => r.priority === 'Medium').length;
             const low = pending.filter(r => r.priority === 'Low').length;
             remindersDashboard.innerHTML = `
-                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-gray-500">Pending</p><p class="text-3xl font-bold text-[#0A174E]">${pending.length}</p></div>
-                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-red-500">High Priority</p><p class="text-3xl font-bold text-[#0A174E]">${high}</p></div>
-                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-yellow-500">Medium Priority</p><p class="text-3xl font-bold text-[#0A174E]">${medium}</p></div>
-                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-green-500">Low Priority</p><p class="text-3xl font-bold text-[#0A174E]">${low}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-gray-500">Pending</p><p class="text-3xl font-bold text-[#0F172A]">${pending.length}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-red-500">High Priority</p><p class="text-3xl font-bold text-[#0F172A]">${high}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-yellow-500">Medium Priority</p><p class="text-3xl font-bold text-[#0F172A]">${medium}</p></div>
+                <div class="bg-white p-4 rounded-lg shadow"><p class="text-sm font-medium text-green-500">Low Priority</p><p class="text-3xl font-bold text-[#0F172A]">${low}</p></div>
             `;
         };
 
@@ -924,20 +927,20 @@
                     </tr>`;
                 }).join('');
             reminderProgressEl.innerHTML = `
-                <h2 class="text-xl font-semibold text-[#0A174E] mb-4">Daily Progress</h2>
+                <h2 class="text-xl font-semibold text-[#0F172A] mb-4">Daily Progress</h2>
                 <div class="grid grid-cols-3 gap-4 mb-6">
-                    <div class="rounded-lg border border-gray-200 p-4 text-center"><p class="text-sm font-medium text-gray-500">Created today</p><p class="text-3xl font-bold text-[#0A174E]">${todayCounts.created}</p></div>
-                    <div class="rounded-lg border border-gray-200 p-4 text-center"><p class="text-sm font-medium text-green-600">Completed today</p><p class="text-3xl font-bold text-[#0A174E]">${todayCounts.completed}</p></div>
-                    <div class="rounded-lg border border-gray-200 p-4 text-center"><p class="text-sm font-medium text-yellow-600">Escalated today</p><p class="text-3xl font-bold text-[#0A174E]">${todayCounts.escalated}</p></div>
+                    <div class="rounded-lg border border-gray-200 p-4 text-center"><p class="text-sm font-medium text-gray-500">Created today</p><p class="text-3xl font-bold text-[#0F172A]">${todayCounts.created}</p></div>
+                    <div class="rounded-lg border border-gray-200 p-4 text-center"><p class="text-sm font-medium text-green-600">Completed today</p><p class="text-3xl font-bold text-[#0F172A]">${todayCounts.completed}</p></div>
+                    <div class="rounded-lg border border-gray-200 p-4 text-center"><p class="text-sm font-medium text-yellow-600">Escalated today</p><p class="text-3xl font-bold text-[#0F172A]">${todayCounts.escalated}</p></div>
                 </div>
                 <div class="overflow-x-auto border border-gray-200 rounded-lg">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-[#0A174E] uppercase tracking-wider">Date</th>
-                                <th class="px-4 py-2 text-center text-xs font-medium text-[#0A174E] uppercase tracking-wider">Created</th>
-                                <th class="px-4 py-2 text-center text-xs font-medium text-[#0A174E] uppercase tracking-wider">Completed</th>
-                                <th class="px-4 py-2 text-center text-xs font-medium text-[#0A174E] uppercase tracking-wider">Escalated</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-[#0F172A] uppercase tracking-wider">Date</th>
+                                <th class="px-4 py-2 text-center text-xs font-medium text-[#0F172A] uppercase tracking-wider">Created</th>
+                                <th class="px-4 py-2 text-center text-xs font-medium text-[#0F172A] uppercase tracking-wider">Completed</th>
+                                <th class="px-4 py-2 text-center text-xs font-medium text-[#0F172A] uppercase tracking-wider">Escalated</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">${rowsHtml}</tbody>
@@ -970,8 +973,8 @@
                 `).join('');
                 const addCommentForm = `
                     <form class="add-gap-comment-form mt-2 flex gap-2" data-id="${item.id}">
-                        <input type="text" class="gap-comment-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-xs" placeholder="Add a comment..." required>
-                        <button type="submit" class="text-xs font-medium px-3 py-1 border border-transparent rounded-md shadow-sm text-white bg-[#0A174E] hover:bg-opacity-90">Add</button>
+                        <input type="text" class="gap-comment-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-xs" placeholder="Add a comment..." required>
+                        <button type="submit" class="text-xs font-medium px-3 py-1 border border-transparent rounded-md shadow-sm text-white bg-[#0F172A] hover:bg-opacity-90">Add</button>
                     </form>`;
                 const actionButton = gapsView === 'completed'
                     ? `<button class="delete-btn-gap text-red-600 hover:text-red-800 font-semibold py-1 px-3 rounded-md bg-red-100 hover:bg-red-200" data-id="${item.id}">Delete</button>`
@@ -990,7 +993,7 @@
                     <td class="px-2 py-2 text-sm text-gray-700 align-top" contenteditable="true" data-field="responsible" data-id="${item.id}">${responsibleVal}</td>
                     <td class="px-2 py-2 text-sm text-gray-700 align-top" contenteditable="true" data-field="accountable" data-id="${item.id}">${item.accountable || ''}</td>
                     <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-500 align-top">
-                        <select class="status-select rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring focus:ring-[#F5D042] focus:ring-opacity-50 text-xs px-1 py-1" data-id="${item.id}">
+                        <select class="status-select rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring focus:ring-[#7C3AED] focus:ring-opacity-50 text-xs px-1 py-1" data-id="${item.id}">
                             <option value="Not Started" ${item.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
                             <option value="In Progress" ${item.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                             <option value="Implemented" ${item.status === 'Implemented' ? 'selected' : ''}>Implemented</option>
@@ -1049,14 +1052,14 @@
                         const done = !!remark.done;
                         return `
                         <li class="flex items-start gap-2 text-xs mt-1 pl-2 border-l-2 ${done ? 'border-green-400' : 'border-gray-300'}">
-                            <input type="checkbox" class="remark-checkbox mt-0.5 shrink-0 h-3.5 w-3.5 accent-[#0A174E] cursor-pointer" data-reminder-id="${reminder.id}" data-remark-index="${idx}" ${done ? 'checked' : ''} title="Mark actioned">
+                            <input type="checkbox" class="remark-checkbox mt-0.5 shrink-0 h-3.5 w-3.5 accent-[#0F172A] cursor-pointer" data-reminder-id="${reminder.id}" data-remark-index="${idx}" ${done ? 'checked' : ''} title="Mark actioned">
                             <span class="${done ? 'line-through text-gray-400' : 'text-gray-600'}"><span class="font-medium ${done ? '' : 'text-gray-700'}">${new Date(remark.timestamp).toLocaleString()}</span>: ${remark.text}</span>
                         </li>`;
                     }).join('');
                     const addRemarkFormHtml = `
                         <form class="add-remark-form mt-2 flex gap-2" data-id="${reminder.id}">
-                            <input type="text" class="remark-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-xs" placeholder="Add a status remark..." required>
-                            <button type="submit" class="text-xs font-medium px-3 py-1 border border-transparent rounded-md shadow-sm text-white bg-[#0A174E] hover:bg-opacity-90">Add</button>
+                            <input type="text" class="remark-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-xs" placeholder="Add a status remark..." required>
+                            <button type="submit" class="text-xs font-medium px-3 py-1 border border-transparent rounded-md shadow-sm text-white bg-[#0F172A] hover:bg-opacity-90">Add</button>
                         </form>
                     `;
                     const createdHtml = reminder.createdAt
@@ -1127,10 +1130,10 @@
                 scheduleList.innerHTML = SLOTS.map(slot => `
                     <div class="schedule-row rounded-md border border-gray-200 bg-white p-2" data-slot="${slot.key}">
                         <div class="flex items-center justify-between gap-2 mb-1">
-                            <span class="text-xs font-semibold text-[#0A174E]">${slot.label}</span>
+                            <span class="text-xs font-semibold text-[#0F172A]">${slot.label}</span>
                             <button class="schedule-done-btn shrink-0 rounded-md" data-slot="${slot.key}"></button>
                         </div>
-                        <input type="text" class="schedule-input block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm px-2 py-1" data-slot="${slot.key}" placeholder="Add a plan...">
+                        <input type="text" class="schedule-input block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-sm px-2 py-1" data-slot="${slot.key}" placeholder="Add a plan...">
                     </div>
                 `).join('');
                 scheduleList.dataset.built = '1';
@@ -1163,11 +1166,11 @@
                     templatesList.innerHTML = templatesData.map(t => `
                         <div class="bg-white p-4 rounded-md shadow-sm" data-id="${t.id}">
                             <div class="flex items-center gap-2 mb-2">
-                                <input type="text" class="template-title flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm font-medium text-[#0A174E]" data-id="${t.id}" placeholder="Template title">
-                                <button class="copy-template text-xs font-medium px-3 py-1.5 rounded-md bg-[#F5D042] text-[#0A174E] hover:bg-opacity-90" data-id="${t.id}">Copy</button>
+                                <input type="text" class="template-title flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-sm font-medium text-[#0F172A]" data-id="${t.id}" placeholder="Template title">
+                                <button class="copy-template text-xs font-medium px-3 py-1.5 rounded-md bg-[#22D3EE] text-[#0F172A] hover:bg-opacity-90" data-id="${t.id}">Copy</button>
                                 <button class="delete-template text-xs font-medium px-3 py-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200" data-id="${t.id}">Delete</button>
                             </div>
-                            <div contenteditable="true" class="template-body w-full rounded-md border border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-1 focus:ring-[#F5D042] text-sm px-3 py-2 min-h-[8rem] bg-white overflow-auto focus:outline-none" data-id="${t.id}" placeholder="Template text..."></div>
+                            <div contenteditable="true" class="template-body w-full rounded-md border border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] text-sm px-3 py-2 min-h-[8rem] bg-white overflow-auto focus:outline-none" data-id="${t.id}" placeholder="Template text..."></div>
                         </div>
                     `).join('');
                 }
@@ -1206,20 +1209,20 @@
                             const done = !!cm.done;
                             return `
                             <li class="flex items-start gap-2 text-xs mt-1 pl-2 border-l-2 ${done ? 'border-green-400' : 'border-gray-300'}">
-                                <input type="checkbox" class="contact-comment-checkbox mt-0.5 shrink-0 h-3.5 w-3.5 accent-[#0A174E] cursor-pointer" data-id="${c.id}" data-comment-index="${idx}" ${done ? 'checked' : ''} title="Mark actioned">
+                                <input type="checkbox" class="contact-comment-checkbox mt-0.5 shrink-0 h-3.5 w-3.5 accent-[#0F172A] cursor-pointer" data-id="${c.id}" data-comment-index="${idx}" ${done ? 'checked' : ''} title="Mark actioned">
                                 <span class="${done ? 'line-through text-gray-400' : 'text-gray-600'}"><span class="font-medium ${done ? '' : 'text-gray-700'}">${new Date(cm.timestamp).toLocaleString()}</span>: ${cm.text}</span>
                             </li>`;
                         }).join('');
 
                         const fieldsHtml = editing ? `
-                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm font-semibold text-[#0A174E] mb-1" data-id="${c.id}" data-field="name" placeholder="Name">
-                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm mb-1" data-id="${c.id}" data-field="role" placeholder="Role / Company">
-                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm mb-1" data-id="${c.id}" data-field="phone" placeholder="Phone">
-                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm mb-1" data-id="${c.id}" data-field="ext" placeholder="Extension">
-                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-sm" data-id="${c.id}" data-field="email" placeholder="Email">
+                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-sm font-semibold text-[#0F172A] mb-1" data-id="${c.id}" data-field="name" placeholder="Name">
+                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-sm mb-1" data-id="${c.id}" data-field="role" placeholder="Role / Company">
+                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-sm mb-1" data-id="${c.id}" data-field="phone" placeholder="Phone">
+                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-sm mb-1" data-id="${c.id}" data-field="ext" placeholder="Extension">
+                            <input type="text" class="contact-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-sm" data-id="${c.id}" data-field="email" placeholder="Email">
                             <button class="delete-contact mt-2 text-xs font-medium px-3 py-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200" data-id="${c.id}">Delete contact</button>
                         ` : `
-                            <p class="text-sm font-semibold text-[#0A174E] pr-6 break-words">${c.name || '(no name)'}</p>
+                            <p class="text-sm font-semibold text-[#0F172A] pr-6 break-words">${c.name || '(no name)'}</p>
                             ${c.role ? `<p class="text-xs text-gray-600 mt-0.5 break-words">${c.role}</p>` : ''}
                             ${(c.phone || c.ext) ? `<p class="text-xs text-gray-600 mt-0.5">${c.phone || ''}${c.ext ? `${c.phone ? ' &middot; ' : ''}ext ${c.ext}` : ''}</p>` : ''}
                             ${c.email ? `<p class="text-xs text-gray-600 break-all">${c.email}</p>` : ''}
@@ -1227,14 +1230,14 @@
 
                         return `
                         <div class="bg-white p-4 rounded-md shadow-sm relative" data-id="${c.id}">
-                            <button class="edit-contact absolute top-2 right-2 p-1 rounded-md ${editing ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:text-[#0A174E] hover:bg-gray-100'}" data-id="${c.id}" title="${editing ? 'Done' : 'Edit'}">${editing ? check : pencil}</button>
+                            <button class="edit-contact absolute top-2 right-2 p-1 rounded-md ${editing ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:text-[#0F172A] hover:bg-gray-100'}" data-id="${c.id}" title="${editing ? 'Done' : 'Edit'}">${editing ? check : pencil}</button>
                             ${fieldsHtml}
                             <div class="mt-3 pt-2 border-t border-gray-100">
                                 <p class="text-xs font-medium text-gray-500 mb-1">Notes &amp; tasks discussed</p>
                                 <ul class="space-y-1">${commentsHtml}</ul>
                                 <form class="add-contact-comment-form mt-2 flex gap-2" data-id="${c.id}">
-                                    <input type="text" class="contact-comment-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#F5D042] focus:ring-[#F5D042] text-xs" placeholder="Add a note / task..." required>
-                                    <button type="submit" class="text-xs font-medium px-2 py-1 border border-transparent rounded-md shadow-sm text-white bg-[#0A174E] hover:bg-opacity-90">Add</button>
+                                    <input type="text" class="contact-comment-input flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-xs" placeholder="Add a note / task..." required>
+                                    <button type="submit" class="text-xs font-medium px-2 py-1 border border-transparent rounded-md shadow-sm text-white bg-[#0F172A] hover:bg-opacity-90">Add</button>
                                 </form>
                             </div>
                         </div>`;
@@ -1366,7 +1369,7 @@
 
             todayBody.innerHTML = `
                 <div class="mb-6">
-                    <h1 class="text-3xl font-bold text-[#0A174E]">${greeting}.</h1>
+                    <h1 class="text-3xl font-bold text-[#0F172A]">${greeting}.</h1>
                     <p class="text-gray-500">${dateStr}</p>
                 </div>
 
@@ -1374,7 +1377,7 @@
                     <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4" data-goto="reminders" role="button">
                         <div class="h-12 w-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">${icon.bell}</div>
                         <div>
-                            <p class="text-3xl font-bold text-[#0A174E] leading-none">${dueToday.length}</p>
+                            <p class="text-3xl font-bold text-[#0F172A] leading-none">${dueToday.length}</p>
                             <p class="text-sm text-gray-500 mt-1">Due today</p>
                             ${overdue.length ? `<p class="text-xs font-medium text-red-600 mt-0.5">${overdue.length} overdue</p>` : ''}
                         </div>
@@ -1382,14 +1385,14 @@
                     <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4" data-goto="gaps" role="button">
                         <div class="h-12 w-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">${icon.flag}</div>
                         <div>
-                            <p class="text-3xl font-bold text-[#0A174E] leading-none">${openGaps.length}</p>
+                            <p class="text-3xl font-bold text-[#0F172A] leading-none">${openGaps.length}</p>
                             <p class="text-sm text-gray-500 mt-1">Open gaps</p>
                         </div>
                     </div>
                     <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4" data-goto="reminders" role="button">
                         <div class="h-12 w-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">${icon.list}</div>
                         <div>
-                            <p class="text-3xl font-bold text-[#0A174E] leading-none">${pending.length}</p>
+                            <p class="text-3xl font-bold text-[#0F172A] leading-none">${pending.length}</p>
                             <p class="text-sm text-gray-500 mt-1">Pending reminders</p>
                             <p class="text-xs font-medium text-gray-600 mt-0.5"><span class="text-red-600">${hp} High</span> &middot; ${mp} Med &middot; ${lp} Low</p>
                         </div>
@@ -1397,7 +1400,7 @@
                     <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4" data-goto="claims" role="button">
                         <div class="h-12 w-12 rounded-xl bg-yellow-50 text-yellow-700 flex items-center justify-center shrink-0">${icon.receipt}</div>
                         <div>
-                            <p class="text-3xl font-bold text-[#0A174E] leading-none">${claimsToday.length}</p>
+                            <p class="text-3xl font-bold text-[#0F172A] leading-none">${claimsToday.length}</p>
                             <p class="text-sm text-gray-500 mt-1">Claims today</p>
                             ${claimsToday.length ? `<p class="text-xs font-medium text-gray-600 mt-0.5">${fmtAmount(claimsTodaySum)}</p>` : ''}
                         </div>
@@ -1406,13 +1409,13 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 bg-white rounded-lg shadow p-6">
-                        <h2 class="text-lg font-semibold text-[#0A174E] mb-3">Needs attention</h2>
+                        <h2 class="text-lg font-semibold text-[#0F172A] mb-3">Needs attention</h2>
                         ${attentionList}
                     </div>
                     <div class="bg-white rounded-lg shadow p-6">
-                        <h2 class="text-lg font-semibold text-[#0A174E] mb-2">Right now</h2>
+                        <h2 class="text-lg font-semibold text-[#0F172A] mb-2">Right now</h2>
                         ${curSlot ? `<p class="text-sm text-gray-500">${curSlot.label}</p><p class="text-base text-gray-800 mt-1 mb-4">${curPlan || '<span class=\"text-gray-400\">No plan for this slot</span>'}</p>` : `<p class="text-sm text-gray-500 mb-4">Outside your planned hours.</p>`}
-                        <h2 class="text-lg font-semibold text-[#0A174E] mb-2 mt-4 pt-4 border-t border-white/40">Open gaps</h2>
+                        <h2 class="text-lg font-semibold text-[#0F172A] mb-2 mt-4 pt-4 border-t border-white/40">Open gaps</h2>
                         ${gapsList}
                     </div>
                 </div>
