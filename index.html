@@ -621,6 +621,7 @@
         let contactsData = []; // [{ id, name, role, phone, email, comments:[{text,timestamp,done}] }]
         let contactSearch = '';
         let editingContactIds = new Set();
+        let editingReminderIds = new Set();
         let renderedContactSig = '';
         let claimFilters = { search: '', location: 'All', from: '', to: '' };
         let activityLog = []; // [{ type: 'created'|'completed'|'escalated', priority, day: 'YYYY-MM-DD', ts }]
@@ -1119,19 +1120,52 @@
                         }
                         deadlineHtml = `<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cls}">${label}</span>`;
                     }
-                    li.innerHTML = `
-                        <div class="w-full">
-                            <div class="flex flex-col gap-2">
-                                <div>
-                                    <span class="text-gray-800 ${isCompletedList ? 'line-through text-gray-500' : 'font-medium'}">${reminder.text}</span>
-                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isCompletedList ? 'bg-gray-100 text-gray-800' : priorityBadgeClasses[reminder.priority]}">${reminder.priority}</span>
-                                    <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">${reminder.category || 'general'}</span>
-                                    ${(reminder.category === 'shipment' && reminder.awb) ? `<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">AWB ${reminder.awb}</span>` : ''}
-                                    ${deadlineHtml}
-                                    ${createdHtml}
-                                </div>
-                                ${actionButtons}
+                    const editing = editingReminderIds.has(reminder.id);
+                    const pencilSvg = `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 4.5l3 3L8 19l-3.5.5L5 16 16.5 4.5Z"/></svg>`;
+                    const checkSvg = `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
+                    const editToggleBtn = `<button class="rem-edit-toggle absolute top-0 right-0 p-1 rounded-md ${editing ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:text-[#0F172A] hover:bg-gray-100'}" data-id="${reminder.id}" title="${editing ? 'Save' : 'Edit'}">${editing ? checkSvg : pencilSvg}</button>`;
+                    const dlVal = reminder.deadline ? (reminder.deadline.length > 10 ? reminder.deadline : reminder.deadline + 'T00:00') : '';
+                    const editBody = `
+                        <div class="space-y-2 pr-6">
+                            <input type="text" class="rem-edit-field block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] text-sm" data-field="text" value="${(reminder.text || '').replace(/"/g, '&quot;')}" placeholder="Reminder">
+                            <div class="grid grid-cols-2 gap-2">
+                                <select class="rem-edit-field rounded-md border-gray-300 shadow-sm text-sm" data-field="priority">
+                                    <option value="High" ${reminder.priority === 'High' ? 'selected' : ''}>High</option>
+                                    <option value="Medium" ${reminder.priority === 'Medium' ? 'selected' : ''}>Medium</option>
+                                    <option value="Low" ${reminder.priority === 'Low' ? 'selected' : ''}>Low</option>
+                                </select>
+                                <select class="rem-edit-field rounded-md border-gray-300 shadow-sm text-sm" data-field="category">
+                                    <option value="shipment" ${reminder.category === 'shipment' ? 'selected' : ''}>Shipment</option>
+                                    <option value="clerical" ${reminder.category === 'clerical' ? 'selected' : ''}>Clerical</option>
+                                    <option value="notes" ${reminder.category === 'notes' ? 'selected' : ''}>Notes</option>
+                                    <option value="recurring" ${reminder.category === 'recurring' ? 'selected' : ''}>Recurring</option>
+                                </select>
                             </div>
+                            <input type="datetime-local" class="rem-edit-field block w-full rounded-md border-gray-300 shadow-sm text-sm" data-field="deadline" value="${dlVal}">
+                            <input type="text" class="rem-edit-field block w-full rounded-md border-gray-300 shadow-sm text-sm" data-field="awb" value="${(reminder.awb || '').replace(/"/g, '&quot;')}" placeholder="AWB (shipment only)">
+                            <select class="rem-edit-field rounded-md border-gray-300 shadow-sm text-sm" data-field="recurPeriod">
+                                <option value="daily" ${reminder.recurPeriod === 'daily' ? 'selected' : ''}>Repeat: Day</option>
+                                <option value="weekly" ${(reminder.recurPeriod === 'weekly' || !reminder.recurPeriod) ? 'selected' : ''}>Repeat: Week</option>
+                                <option value="monthly" ${reminder.recurPeriod === 'monthly' ? 'selected' : ''}>Repeat: Month</option>
+                            </select>
+                            <button class="delete-reminder text-xs font-medium px-3 py-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200" data-id="${reminder.id}">Delete</button>
+                        </div>`;
+                    const displayBody = `
+                        <div class="flex flex-col gap-2 pr-6">
+                            <div>
+                                <span class="text-gray-800 ${isCompletedList ? 'line-through text-gray-500' : 'font-medium'}">${reminder.text}</span>
+                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isCompletedList ? 'bg-gray-100 text-gray-800' : priorityBadgeClasses[reminder.priority]}">${reminder.priority}</span>
+                                <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">${reminder.category || 'general'}</span>
+                                ${(reminder.category === 'shipment' && reminder.awb) ? `<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">AWB ${reminder.awb}</span>` : ''}
+                                ${deadlineHtml}
+                                ${createdHtml}
+                            </div>
+                            ${actionButtons}
+                        </div>`;
+                    li.innerHTML = `
+                        <div class="w-full relative">
+                            ${editToggleBtn}
+                            ${editing ? editBody : displayBody}
                             <div class="remarks-section mt-3 pt-2 border-t border-gray-100">
                                 <ul class="remarks-list space-y-1">${remarksHtml}</ul>
                                 ${!isCompletedList ? addRemarkFormHtml : ''}
@@ -2001,6 +2035,36 @@
         });
 
         document.getElementById('reminders-content').addEventListener('click', (e) => {
+            const editToggle = e.target.closest('.rem-edit-toggle');
+            if (editToggle) {
+                const id = parseInt(editToggle.dataset.id);
+                const reminder = remindersData.find(r => r.id === id);
+                if (!reminder) return;
+                if (editingReminderIds.has(id)) {
+                    const card = editToggle.closest('li');
+                    card.querySelectorAll('.rem-edit-field').forEach(inp => { reminder[inp.dataset.field] = inp.value; });
+                    if (reminder.category !== 'shipment') reminder.awb = '';
+                    if (reminder.category !== 'recurring') reminder.recurPeriod = '';
+                    editingReminderIds.delete(id);
+                    saveDataToFirebase();
+                    showToast('Reminder updated.');
+                } else {
+                    editingReminderIds.add(id);
+                    renderReminders();
+                }
+                return;
+            }
+            const delRem = e.target.closest('.delete-reminder');
+            if (delRem) {
+                const id = parseInt(delRem.dataset.id);
+                if (confirm('Delete this reminder?')) {
+                    remindersData = remindersData.filter(r => r.id !== id);
+                    editingReminderIds.delete(id);
+                    saveDataToFirebase();
+                    showToast('Reminder deleted.');
+                }
+                return;
+            }
             const remarkCb = e.target.closest('.remark-checkbox');
             if (remarkCb) {
                 const rid = parseInt(remarkCb.dataset.reminderId);
