@@ -385,6 +385,15 @@
                         <label for="new-reminder-awb" class="block text-sm font-medium text-gray-700">Shipment AWB <span class="text-red-500">*</span></label>
                         <input type="text" id="new-reminder-awb" class="mt-1 block w-full max-w-sm rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm" placeholder="AWB number (required for shipment)">
                     </div>
+                    <div id="recur-field">
+                        <label for="new-reminder-recur" class="block text-sm font-medium text-gray-700">Repeat every</label>
+                        <select id="new-reminder-recur" class="mt-1 block w-full max-w-xs rounded-md border-gray-300 shadow-sm focus:border-[#7C3AED] focus:ring-[#7C3AED] sm:text-sm">
+                            <option value="daily">Day</option>
+                            <option value="weekly" selected>Week</option>
+                            <option value="monthly">Month</option>
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">When you mark it done, the due date moves forward by this period.</p>
+                    </div>
                     <div class="flex justify-end">
                         <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#0F172A] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7C3AED]">Add Reminder</button>
                     </div>
@@ -419,6 +428,10 @@
                             <h3 class="text-sm font-semibold mb-2 px-2 py-1 rounded-md bg-green-100 text-green-800">Low</h3>
                             <ul id="pending-low" class="space-y-3"></ul>
                         </div>
+                    </div>
+                    <div id="recurring-section" class="mt-8">
+                        <h3 class="text-sm font-semibold mb-2 px-2 py-1 rounded-md bg-purple-100 text-purple-800 inline-block">&#8635; Recurring</h3>
+                        <ul id="recurring-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start mt-2"></ul>
                     </div>
                 </div>
                 <div id="completed-reminders-content" class="hidden mt-6">
@@ -653,6 +666,8 @@
         const pendingHighList = document.getElementById('pending-high');
         const pendingMediumList = document.getElementById('pending-medium');
         const pendingLowList = document.getElementById('pending-low');
+        const recurringSection = document.getElementById('recurring-section');
+        const recurringList = document.getElementById('recurring-list');
         const completedRemindersList = document.getElementById('completed-reminders-list');
         const reminderProgressEl = document.getElementById('reminder-progress');
         const reminderAlertsEl = document.getElementById('reminder-alerts');
@@ -871,6 +886,18 @@
         const parseDeadline = (d) => d ? new Date(d.length <= 10 ? d + 'T23:59' : d) : null;
         const isOverdue = (d) => { const dt = parseDeadline(d); return dt ? dt.getTime() < Date.now() : false; };
         const deadlineTimeStr = (d) => (d && d.length > 10) ? new Date(d).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '';
+        // Move a deadline forward by a recurring period, preserving any time component.
+        const advanceDeadline = (deadline, period) => {
+            if (!deadline) return deadline;
+            const hasTime = deadline.length > 10;
+            const d = new Date(hasTime ? deadline : deadline + 'T00:00');
+            if (period === 'weekly') d.setDate(d.getDate() + 7);
+            else if (period === 'monthly') d.setMonth(d.getMonth() + 1);
+            else d.setDate(d.getDate() + 1);
+            const pad = (n) => String(n).padStart(2, '0');
+            const datePart = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+            return hasTime ? `${datePart}T${pad(d.getHours())}:${pad(d.getMinutes())}` : datePart;
+        };
 
         const notifiedDeadlineIds = new Set(); // avoid repeat notifications within a session
 
@@ -1020,11 +1047,15 @@
         const renderReminders = () => {
             const pendingReminders = remindersData.filter(r => r.status === 'pending');
             const completedReminders = remindersData.filter(r => r.status === 'completed');
+            // Recurring reminders sit in their own slot, sorted by next due date. Priority columns exclude them.
+            const nonRecurring = pendingReminders.filter(r => r.category !== 'recurring');
+            const pendingRecurring = pendingReminders.filter(r => r.category === 'recurring')
+                .sort((a, b) => ((parseDeadline(a.deadline) ? parseDeadline(a.deadline).getTime() : Infinity) - (parseDeadline(b.deadline) ? parseDeadline(b.deadline).getTime() : Infinity)));
             // Sort by creation order (id ascending), then split by priority into columns.
             const byCreation = (a, b) => a.id - b.id;
-            const pendingHigh = pendingReminders.filter(r => r.priority === 'High').sort(byCreation);
-            const pendingMedium = pendingReminders.filter(r => r.priority === 'Medium').sort(byCreation);
-            const pendingLow = pendingReminders.filter(r => r.priority === 'Low').sort(byCreation);
+            const pendingHigh = nonRecurring.filter(r => r.priority === 'High').sort(byCreation);
+            const pendingMedium = nonRecurring.filter(r => r.priority === 'Medium').sort(byCreation);
+            const pendingLow = nonRecurring.filter(r => r.priority === 'Low').sort(byCreation);
             const renderList = (list, element, isCompletedList = false, emptyMsg = 'No reminders found in this view.') => {
                 element.innerHTML = '';
                 if (list.length === 0) {
@@ -1112,6 +1143,8 @@
             renderList(pendingHigh, pendingHighList, false, 'No high-priority reminders.');
             renderList(pendingMedium, pendingMediumList, false, 'No medium-priority reminders.');
             renderList(pendingLow, pendingLowList, false, 'No low-priority reminders.');
+            renderList(pendingRecurring, recurringList, false, 'No recurring reminders.');
+            recurringSection.style.display = pendingRecurring.length ? '' : 'none';
             renderList(completedReminders, completedRemindersList, true, 'Nothing completed yet.');
         };
 
@@ -1909,11 +1942,14 @@
             } catch (e) { showToast('Could not enable alerts.', true); }
         });
 
-        // Show the AWB field only for shipment reminders, and require it there.
+        // Show category-specific fields: AWB for shipment, repeat period for recurring.
         const awbField = document.getElementById('awb-field');
+        const recurField = document.getElementById('recur-field');
         const syncAwbVisibility = () => {
             const cat = document.querySelector('input[name="reminder-category"]:checked');
-            awbField.style.display = (cat && cat.value === 'shipment') ? '' : 'none';
+            const v = cat ? cat.value : '';
+            awbField.style.display = (v === 'shipment') ? '' : 'none';
+            recurField.style.display = (v === 'recurring') ? '' : 'none';
         };
         document.querySelectorAll('input[name="reminder-category"]').forEach(r => r.addEventListener('change', syncAwbVisibility));
         syncAwbVisibility();
@@ -1923,16 +1959,19 @@
             const reminderText = document.getElementById('new-reminder-text').value;
             const priority = document.getElementById('new-reminder-priority').value;
             const category = document.querySelector('input[name="reminder-category"]:checked').value;
-            const deadline = document.getElementById('new-reminder-deadline').value; // '' or 'YYYY-MM-DD'
+            let deadline = document.getElementById('new-reminder-deadline').value; // '' or 'YYYY-MM-DDTHH:MM'
             const awb = document.getElementById('new-reminder-awb').value.trim();
+            const recurPeriod = document.getElementById('new-reminder-recur').value;
             if (category === 'shipment' && !awb) {
                 showToast('Shipment reminders require an AWB number.', true);
                 document.getElementById('new-reminder-awb').focus();
                 return;
             }
+            // A recurring reminder needs a starting due date to roll forward; default to today.
+            if (category === 'recurring' && !deadline) deadline = todayStr();
             if (reminderText) {
                 const newId = remindersData.length > 0 ? Math.max(...remindersData.map(r => r.id)) + 1 : 1;
-                const newReminder = { id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [], createdAt: new Date().toISOString(), deadline: deadline || '', awb: category === 'shipment' ? awb : '' };
+                const newReminder = { id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [], createdAt: new Date().toISOString(), deadline: deadline || '', awb: category === 'shipment' ? awb : '', recurPeriod: category === 'recurring' ? recurPeriod : '' };
                 remindersData.push(newReminder);
                 logActivity('created', newReminder);
                 saveDataToFirebase();
@@ -1982,8 +2021,10 @@
                     if (reminder.category === 'recurring') {
                         if (!reminder.remarks) reminder.remarks = [];
                         reminder.remarks.push({ text: 'Marked done', timestamp: new Date().toISOString(), done: false });
+                        if (reminder.deadline) reminder.deadline = advanceDeadline(reminder.deadline, reminder.recurPeriod || 'daily');
                         saveDataToFirebase();
-                        showToast('Recurring reminder logged. It stays active.');
+                        const p = reminder.recurPeriod === 'monthly' ? 'month' : (reminder.recurPeriod === 'daily' ? 'day' : 'week');
+                        showToast(`Recurring done. Due date moved to next ${p}.`);
                     } else {
                         reminder.status = 'completed';
                         saveDataToFirebase();
