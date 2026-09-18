@@ -257,6 +257,7 @@
                 <button id="tab-templates" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Templates</button>
                 <button id="tab-directory" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Directory</button>
                 <button id="tab-claims" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Claims</button>
+                <button id="tab-reports" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Reports</button>
             </nav>
         </aside>
         <main class="flex-grow min-w-0 w-full">
@@ -272,26 +273,30 @@
 
             <!-- Add New Gap form (moved to top) -->
             <div class="bg-white p-6 shadow-md rounded-lg mb-8">
-                <h2 class="text-xl font-semibold text-[#111111] mb-4">Add New Gap</h2>
-                <form id="add-gap-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="lg:col-span-2">
-                        <label for="new-gap" class="block text-sm font-medium text-gray-700">Gap</label>
-                        <input type="text" id="new-gap" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm" placeholder="e.g., Gaps in performance" required>
+                <h2 class="text-lg font-semibold text-[#111111] mb-4">Add gap</h2>
+                <form id="add-gap-form" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label for="new-gap" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Gap</label>
+                            <input type="text" id="new-gap" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="e.g., Gaps in performance" required>
+                        </div>
+                        <div>
+                            <label for="new-action" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Corrective action</label>
+                            <textarea id="new-action" rows="1" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="e.g., Restructure routes..." required></textarea>
+                        </div>
                     </div>
-                    <div class="lg:col-span-2">
-                        <label for="new-action" class="block text-sm font-medium text-gray-700">Corrective Action(s)</label>
-                        <textarea id="new-action" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm" placeholder="e.g., Restructure routes..." required></textarea>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="new-responsible" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Responsible</label>
+                            <input type="text" id="new-responsible" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="Who does the work">
+                        </div>
+                        <div>
+                            <label for="new-accountable" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Accountable</label>
+                            <input type="text" id="new-accountable" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="Who owns the outcome">
+                        </div>
                     </div>
-                    <div>
-                        <label for="new-responsible" class="block text-sm font-medium text-gray-700">Responsible</label>
-                        <input type="text" id="new-responsible" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm" placeholder="Who does the work">
-                    </div>
-                    <div>
-                        <label for="new-accountable" class="block text-sm font-medium text-gray-700">Accountable</label>
-                        <input type="text" id="new-accountable" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm" placeholder="Who owns the outcome">
-                    </div>
-                    <div class="md:col-span-2 lg:col-span-4 flex justify-end">
-                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#111111] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#374151]">Add Item</button>
+                    <div class="flex justify-end">
+                        <button type="submit" class="inline-flex justify-center py-2 px-5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#111111] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#374151]">Add gap</button>
                     </div>
                 </form>
             </div>
@@ -338,64 +343,50 @@
             </div>
             <div id="reminder-alerts" class="hidden mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"></div>
             <div id="reminders-dashboard" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
-            <div id="reminder-progress" class="bg-white p-6 shadow-md rounded-lg mb-8"></div>
             <div class="bg-white p-6 shadow-md rounded-lg">
-                <h2 class="text-xl font-semibold text-[#111111] mb-4">Add New Reminder</h2>
+                <h2 class="text-lg font-semibold text-[#111111] mb-4">Add reminder</h2>
                 <form id="add-reminder-form" class="space-y-4">
                     <div>
-                        <label for="new-reminder-text" class="block text-sm font-medium text-gray-700">Reminder</label>
-                        <input type="text" id="new-reminder-text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm" placeholder="e.g., Follow up with the warehouse team" required>
+                        <label for="new-reminder-text" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Reminder</label>
+                        <input type="text" id="new-reminder-text" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="e.g., Follow up with the warehouse team" required>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div>
-                            <label for="new-reminder-priority" class="block text-sm font-medium text-gray-700">Priority</label>
-                            <select id="new-reminder-priority" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm">
-                                <option value="Low">Low</option>
-                                <option value="Medium" selected>Medium</option>
+                            <label for="new-reminder-priority" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Priority</label>
+                            <select id="new-reminder-priority" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm">
                                 <option value="High">High</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="Low">Low</option>
                             </select>
                         </div>
                         <div>
-                            <label for="new-reminder-deadline" class="block text-sm font-medium text-gray-700">Deadline <span class="text-gray-400 font-normal">(optional)</span></label>
-                            <input type="datetime-local" id="new-reminder-deadline" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm">
+                            <label for="new-reminder-category" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Category</label>
+                            <select id="new-reminder-category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm">
+                                <option value="shipment" selected>Shipment</option>
+                                <option value="clerical">Clerical</option>
+                                <option value="notes">Notes</option>
+                                <option value="recurring">Recurring</option>
+                            </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Category</label>
-                            <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="reminder-category" value="shipment" class="focus:ring-[#374151] h-4 w-4 text-[#111111] border-gray-300" checked>
-                                    <span class="ml-2">Shipment</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="reminder-category" value="clerical" class="focus:ring-[#374151] h-4 w-4 text-[#111111] border-gray-300">
-                                    <span class="ml-2">Clerical</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="reminder-category" value="notes" class="focus:ring-[#374151] h-4 w-4 text-[#111111] border-gray-300">
-                                    <span class="ml-2">Notes</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="reminder-category" value="recurring" class="focus:ring-[#374151] h-4 w-4 text-[#111111] border-gray-300">
-                                    <span class="ml-2">Recurring</span>
-                                </label>
-                            </div>
+                            <label for="new-reminder-deadline" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Deadline</label>
+                            <input type="datetime-local" id="new-reminder-deadline" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm">
+                        </div>
+                        <div id="awb-field">
+                            <label for="new-reminder-awb" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">AWB <span class="text-red-500">*</span></label>
+                            <input type="text" id="new-reminder-awb" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="AWB number">
+                        </div>
+                        <div id="recur-field">
+                            <label for="new-reminder-recur" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Repeat every</label>
+                            <select id="new-reminder-recur" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm">
+                                <option value="daily">Day</option>
+                                <option value="weekly" selected>Week</option>
+                                <option value="monthly">Month</option>
+                            </select>
                         </div>
                     </div>
-                    <div id="awb-field">
-                        <label for="new-reminder-awb" class="block text-sm font-medium text-gray-700">Shipment AWB <span class="text-red-500">*</span></label>
-                        <input type="text" id="new-reminder-awb" class="mt-1 block w-full max-w-sm rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm" placeholder="AWB number (required for shipment)">
-                    </div>
-                    <div id="recur-field">
-                        <label for="new-reminder-recur" class="block text-sm font-medium text-gray-700">Repeat every</label>
-                        <select id="new-reminder-recur" class="mt-1 block w-full max-w-xs rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm">
-                            <option value="daily">Day</option>
-                            <option value="weekly" selected>Week</option>
-                            <option value="monthly">Month</option>
-                        </select>
-                        <p class="text-xs text-gray-400 mt-1">When you mark it done, the due date moves forward by this period.</p>
-                    </div>
                     <div class="flex justify-end">
-                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#111111] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#374151]">Add Reminder</button>
+                        <button type="submit" class="inline-flex justify-center py-2 px-5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#111111] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#374151]">Add reminder</button>
                     </div>
                 </form>
             </div>
@@ -589,6 +580,11 @@
                 </table>
             </div>
         </div>
+
+        <!-- Reports Content -->
+        <div id="reports-content" class="hidden">
+            <div id="reminder-progress" class="bg-white p-6 shadow-md rounded-lg"></div>
+        </div>
         </main>
         </div>
         <footer class="mt-10 pt-6 border-t border-gray-200 text-center text-xs text-gray-400">
@@ -650,6 +646,8 @@
         // App DOM
         const tabGaps = document.getElementById('tab-gaps');
         const tabToday = document.getElementById('tab-today');
+        const tabReports = document.getElementById('tab-reports');
+        const reportsContent = document.getElementById('reports-content');
         const todayContent = document.getElementById('today-content');
         const todayBody = document.getElementById('today-body');
         const tabReminders = document.getElementById('tab-reminders');
@@ -1560,6 +1558,7 @@
             templatesContent.classList.add('hidden');
             claimsContent.classList.add('hidden');
             directoryContent.classList.add('hidden');
+            reportsContent.classList.add('hidden');
             tabToday.classList.remove('active');
             tabGaps.classList.remove('active');
             tabReminders.classList.remove('active');
@@ -1567,6 +1566,7 @@
             tabTemplates.classList.remove('active');
             tabClaims.classList.remove('active');
             tabDirectory.classList.remove('active');
+            tabReports.classList.remove('active');
             if (tab === 'today') {
                 todayContent.classList.remove('hidden');
                 tabToday.classList.add('active');
@@ -1589,6 +1589,10 @@
             } else if (tab === 'directory') {
                 directoryContent.classList.remove('hidden');
                 tabDirectory.classList.add('active');
+            } else if (tab === 'reports') {
+                reportsContent.classList.remove('hidden');
+                tabReports.classList.add('active');
+                renderReminderProgress();
             }
         };
 
@@ -1625,6 +1629,7 @@
         tabSchedule.addEventListener('click', () => switchTab('schedule'));
         tabTemplates.addEventListener('click', () => switchTab('templates'));
         tabDirectory.addEventListener('click', () => switchTab('directory'));
+        tabReports.addEventListener('click', () => switchTab('reports'));
         tabClaims.addEventListener('click', () => switchTab('claims'));
         gapSubTabActive.addEventListener('click', () => switchGapsView('active'));
         gapSubTabCompleted.addEventListener('click', () => switchGapsView('completed'));
@@ -1982,20 +1987,20 @@
         // Show category-specific fields: AWB for shipment, repeat period for recurring.
         const awbField = document.getElementById('awb-field');
         const recurField = document.getElementById('recur-field');
+        const catSelect = document.getElementById('new-reminder-category');
         const syncAwbVisibility = () => {
-            const cat = document.querySelector('input[name="reminder-category"]:checked');
-            const v = cat ? cat.value : '';
+            const v = catSelect.value;
             awbField.style.display = (v === 'shipment') ? '' : 'none';
             recurField.style.display = (v === 'recurring') ? '' : 'none';
         };
-        document.querySelectorAll('input[name="reminder-category"]').forEach(r => r.addEventListener('change', syncAwbVisibility));
+        catSelect.addEventListener('change', syncAwbVisibility);
         syncAwbVisibility();
 
         addReminderForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const reminderText = document.getElementById('new-reminder-text').value;
             const priority = document.getElementById('new-reminder-priority').value;
-            const category = document.querySelector('input[name="reminder-category"]:checked').value;
+            const category = document.getElementById('new-reminder-category').value;
             let deadline = document.getElementById('new-reminder-deadline').value; // '' or 'YYYY-MM-DDTHH:MM'
             const awb = document.getElementById('new-reminder-awb').value.trim();
             const recurPeriod = document.getElementById('new-reminder-recur').value;
