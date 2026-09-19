@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Operation Panel</title>
+    <link rel="icon" type="image/png" href="ops-logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -227,9 +228,19 @@
         body.theme-dark #reminder-alerts { color: #fecaca !important; }
         body.theme-dark ::-webkit-scrollbar-thumb { background: #39415c; }
         body.theme-dark ::-webkit-scrollbar-thumb:hover { background: #4b5570; }
+        /* Faint full-page logo watermark, behind the glass panels */
+        .app-watermark {
+            position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background: url("ops-logo.png") no-repeat center 40%;
+            background-size: min(560px, 72vw);
+            opacity: .05;
+        }
+        body.theme-dark .app-watermark { opacity: .08; filter: invert(1) brightness(1.6); }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8">
+
+    <div class="app-watermark" aria-hidden="true"></div>
 
     <!-- Notification Area (always present, outside the auth gate) -->
     <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
@@ -237,6 +248,7 @@
     <!-- Login Screen -->
     <div id="login-screen" class="hidden min-h-[70vh] flex items-center justify-center">
         <div class="bg-white p-8 rounded-lg shadow-md text-center max-w-sm w-full">
+            <img src="ops-logo.png" alt="OPS Management" class="mx-auto h-24 mb-4">
             <h1 class="text-2xl font-bold text-[#111111] mb-2">Operation Panel</h1>
             <p class="text-gray-600 mb-6">Track what matters to you.</p>
             <button id="sign-in-btn" class="w-full inline-flex justify-center items-center gap-2 py-2.5 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#111111]">
@@ -279,7 +291,7 @@
                 <button id="tab-today" class="tab-btn active text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Today</button>
                 <button id="tab-gaps" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Gaps Tracker</button>
                 <button id="tab-reminders" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Reminders</button>
-                <button id="tab-schedule" class="tab-btn hidden text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Schedule</button>
+                <button id="tab-schedule" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Schedule</button>
                 <button id="tab-templates" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Templates</button>
                 <button id="tab-directory" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Directory</button>
                 <button id="tab-claims" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Claims</button>
@@ -464,11 +476,13 @@
         <div id="schedule-content" class="hidden">
             <div class="bg-white p-6 shadow-md rounded-lg">
                 <div class="flex items-baseline justify-between flex-wrap gap-2 mb-1">
-                    <h2 class="text-xl font-semibold text-[#111111]">Daily Plan</h2>
+                    <h2 class="text-xl font-semibold text-[#111111]">Weekly Plan</h2>
                     <button id="clear-schedule-btn" class="text-xs font-medium px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Clear all slots</button>
                 </div>
-                <p class="text-sm text-gray-500 mb-4">08:00 AM to 07:00 PM, half-hour slots. This schedule stays the same until you edit it.</p>
-                <div id="schedule-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                <p class="text-sm text-gray-500 mb-4">Seven days, 08:00 AM to 07:00 PM in half-hour slots. Stays the same until you edit it.</p>
+                <div class="overflow-x-auto">
+                    <div id="schedule-list" style="min-width:840px"></div>
+                </div>
             </div>
         </div>
 
@@ -822,7 +836,7 @@
                     // Seed bug fixed: once the doc exists, an empty list stays empty.
                     gapsData = data.gaps || [];
                     remindersData = data.reminders || [];
-                    scheduleData = data.schedule || {};
+                    scheduleData = migrateSchedule(data.schedule || {});
                     scheduleStatus = data.scheduleStatus || { date: '', done: {} };
                     templatesData = data.templates || [];
                     claimsData = data.claims || [];
@@ -1232,35 +1246,72 @@
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         };
 
+        const DAYS = [
+            { key: 'sun', label: 'Sun' }, { key: 'mon', label: 'Mon' }, { key: 'tue', label: 'Tue' },
+            { key: 'wed', label: 'Wed' }, { key: 'thu', label: 'Thu' }, { key: 'fri', label: 'Fri' }, { key: 'sat', label: 'Sat' }
+        ];
+        // Old format was a flat { "08:00": "text" } daily plan. Convert it to per-day, seeding every day with it.
+        const migrateSchedule = (raw) => {
+            if (!raw || typeof raw !== 'object') return {};
+            const dayKeys = DAYS.map(d => d.key);
+            const isNested = Object.keys(raw).some(k => dayKeys.includes(k));
+            const isFlat = Object.keys(raw).some(k => k.includes(':'));
+            if (isNested) return raw;
+            if (isFlat) {
+                const out = {};
+                dayKeys.forEach(d => { out[d] = { ...raw }; });
+                return out;
+            }
+            return {};
+        };
+
+        const slotForTime = (h, m) => {
+            const mins = h * 60 + m;
+            for (const s of SLOTS) { const [sh, sm] = s.key.split(':').map(Number); const st = sh * 60 + sm; if (mins >= st && mins < st + 30) return s.key; }
+            return null;
+        };
+
         const renderSchedule = () => {
-            // Build the rows once, then only update values so typing is never interrupted.
+            // Build the weekly grid once (time rows x day columns); then only refresh values so typing isn't interrupted.
             if (!scheduleList.dataset.built) {
-                scheduleList.innerHTML = SLOTS.map(slot => `
-                    <div class="schedule-row rounded-md border border-gray-200 bg-white p-2" data-slot="${slot.key}">
-                        <div class="flex items-center justify-between gap-2 mb-1">
-                            <span class="text-xs font-semibold text-[#111111]">${slot.label}</span>
-                            <button class="schedule-done-btn shrink-0 rounded-md" data-slot="${slot.key}"></button>
-                        </div>
-                        <input type="text" class="schedule-input block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm px-2 py-1" data-slot="${slot.key}" placeholder="Add a plan...">
+                const head = `<div class="grid gap-1 mb-1" style="grid-template-columns: 84px repeat(7, 1fr)">
+                    <div></div>
+                    ${DAYS.map(d => `<div class="text-center text-xs font-semibold text-[#111111] py-1">${d.label}</div>`).join('')}
+                </div>`;
+                const rows = SLOTS.map(slot => `
+                    <div class="grid gap-1 mb-1 items-start" style="grid-template-columns: 84px repeat(7, 1fr)">
+                        <div class="text-[11px] font-medium text-gray-500 whitespace-nowrap pt-1.5">${slot.key}</div>
+                        ${DAYS.map(d => `<div class="schedule-cell" data-day="${d.key}" data-slot="${slot.key}">
+                            <input type="text" class="schedule-input block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-xs px-1.5 py-1" data-day="${d.key}" data-slot="${slot.key}" placeholder="—">
+                            <div class="schedule-cell-rem mt-0.5 space-y-0.5"></div>
+                        </div>`).join('')}
                     </div>
                 `).join('');
+                scheduleList.innerHTML = head + rows;
                 scheduleList.dataset.built = '1';
             }
-            // Ticks only count for today. If the stored date is not today, show all as not done.
-            const doneMap = (scheduleStatus.date === todayStr()) ? (scheduleStatus.done || {}) : {};
-            scheduleList.querySelectorAll('.schedule-row').forEach(row => {
-                const slot = row.dataset.slot;
-                const inp = row.querySelector('.schedule-input');
-                const btn = row.querySelector('.schedule-done-btn');
-                const done = !!doneMap[slot];
+            scheduleList.querySelectorAll('.schedule-input').forEach(inp => {
                 if (document.activeElement !== inp) {
-                    inp.value = scheduleData[slot] || '';
+                    const day = scheduleData[inp.dataset.day] || {};
+                    inp.value = day[inp.dataset.slot] || '';
                 }
-                inp.classList.toggle('line-through', done);
-                inp.classList.toggle('text-gray-400', done);
-                btn.textContent = done ? '\u2713 Done' : 'Mark';
-                btn.className = 'schedule-done-btn shrink-0 rounded-md text-[11px] font-medium px-2 py-0.5 ' +
-                    (done ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-300');
+            });
+            // Overlay pending reminders that have a timed deadline, by weekday + slot
+            const bySlot = {};
+            remindersData.filter(r => r.status === 'pending' && r.deadline && r.deadline.length > 10).forEach(r => {
+                const dt = new Date(r.deadline);
+                const slotKey = slotForTime(dt.getHours(), dt.getMinutes());
+                if (!slotKey) return;
+                const k = DAYS[dt.getDay()].key + '|' + slotKey;
+                (bySlot[k] = bySlot[k] || []).push(r);
+            });
+            scheduleList.querySelectorAll('.schedule-cell').forEach(cell => {
+                const list = bySlot[cell.dataset.day + '|' + cell.dataset.slot] || [];
+                cell.querySelector('.schedule-cell-rem').innerHTML = list.map(r => {
+                    const cls = isOverdue(r.deadline) ? 'bg-red-100 text-red-800' : 'bg-indigo-100 text-indigo-800';
+                    const t = deadlineTimeStr(r.deadline);
+                    return `<div class="truncate rounded px-1 py-0.5 text-[10px] font-medium ${cls}" title="${(r.text || '').replace(/"/g, '&quot;')} — ${t}">${t} ${r.text}</div>`;
+                }).join('');
             });
         };
 
@@ -1451,17 +1502,12 @@
             const dueToday = withDeadline.filter(r => !isOverdue(r.deadline) && daysUntil(r.deadline) === 0);
             const attention = [...overdue, ...dueToday];
 
-            // Schedule progress (of slots that have a plan, how many are ticked today)
-            const doneMap = (scheduleStatus.date === todayStr()) ? (scheduleStatus.done || {}) : {};
-            const planned = SLOTS.filter(s => (scheduleData[s.key] || '').trim());
-            const donePlanned = planned.filter(s => doneMap[s.key]).length;
-            const frac = planned.length ? donePlanned / planned.length : 0;
-            const R = 34, C = 2 * Math.PI * R;
-            const dash = `${(frac * C).toFixed(1)} ${C.toFixed(1)}`;
-            // Current slot
+            // Current slot for today, from the weekly plan
+            const todayDayKey = DAYS[now.getDay()].key;
+            const todayPlan = scheduleData[todayDayKey] || {};
             const nowMin = hour * 60 + now.getMinutes();
             const curSlot = SLOTS.find(s => { const [h, m] = s.key.split(':').map(Number); const st = h * 60 + m; return nowMin >= st && nowMin < st + 30; });
-            const curPlan = curSlot ? (scheduleData[curSlot.key] || '').trim() : '';
+            const curPlan = curSlot ? (todayPlan[curSlot.key] || '').trim() : '';
 
             // Open gaps (not completed)
             const openGaps = gapsData.filter(g => g.status !== 'Implemented');
@@ -1665,35 +1711,21 @@
         subTabPending.addEventListener('click', () => switchReminderTab('pending'));
         subTabCompleted.addEventListener('click', () => switchReminderTab('completed'));
 
-        // Schedule: save a slot as you type (debounced), remove empty ones
+        // Schedule: save a day+slot as you type (debounced), remove empty ones
         scheduleList.addEventListener('input', (e) => {
             if (e.target.classList.contains('schedule-input')) {
+                const day = e.target.dataset.day;
                 const slot = e.target.dataset.slot;
                 const val = e.target.value;
-                if (val.trim()) { scheduleData[slot] = val; } else { delete scheduleData[slot]; }
+                if (!scheduleData[day]) scheduleData[day] = {};
+                if (val.trim()) { scheduleData[day][slot] = val; } else { delete scheduleData[day][slot]; }
                 clearTimeout(e.target.saveTimeout);
                 e.target.saveTimeout = setTimeout(saveDataToFirebase, 600);
             }
         });
 
-        // Schedule: toggle a slot's completion for today (resets automatically after midnight)
-        scheduleList.addEventListener('click', (e) => {
-            const btn = e.target.closest('.schedule-done-btn');
-            if (!btn) return;
-            const slot = btn.dataset.slot;
-            const today = todayStr();
-            // New day (or first tick): start a fresh done map dated to today.
-            if (scheduleStatus.date !== today) {
-                scheduleStatus = { date: today, done: {} };
-            }
-            if (!scheduleStatus.done) scheduleStatus.done = {};
-            if (scheduleStatus.done[slot]) { delete scheduleStatus.done[slot]; } else { scheduleStatus.done[slot] = true; }
-            saveDataToFirebase();
-            renderSchedule();
-        });
-
         clearScheduleBtn.addEventListener('click', () => {
-            if (confirm('Clear the text in every time slot? This cannot be undone.')) {
+            if (confirm('Clear the text in every slot for all seven days? This cannot be undone.')) {
                 scheduleData = {};
                 scheduleList.querySelectorAll('.schedule-input').forEach(inp => { inp.value = ''; });
                 saveDataToFirebase();
