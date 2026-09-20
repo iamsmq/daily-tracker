@@ -226,6 +226,8 @@
         body.theme-dark .sub-tab-btn.active { color: #ffffff !important; border-color: #ffffff !important; }
         body.theme-dark .sub-tab-btn:not(.active) { color: #9a9a9a !important; }
         body.theme-dark #reminder-alerts { color: #fecaca !important; }
+        .reminder-title-bg { background: rgba(0,0,0,.05); }
+        body.theme-dark .reminder-title-bg { background: rgba(255,255,255,.07); }
         body.theme-dark ::-webkit-scrollbar-thumb { background: #39415c; }
         body.theme-dark ::-webkit-scrollbar-thumb:hover { background: #4b5570; }
         /* Faint full-page logo watermark, behind the glass panels */
@@ -1196,14 +1198,16 @@
                         </div>`;
                     const displayBody = `
                         <div class="flex flex-col gap-2 pr-6">
-                            <div>
+                            <div class="reminder-title-bg rounded-md px-2 py-1">
                                 <span class="${isCompletedList ? 'line-through text-gray-500' : ((reminder.deadline && isOverdue(reminder.deadline)) ? 'text-red-600 font-semibold' : 'text-gray-800 font-medium')}">${reminder.text}</span>
-                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isCompletedList ? 'bg-gray-100 text-gray-800' : priorityBadgeClasses[reminder.priority]}">${reminder.priority}</span>
-                                <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">${reminder.category || 'general'}</span>
-                                ${(reminder.category === 'shipment' && reminder.awb) ? `<span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">AWB ${reminder.awb}</span>` : ''}
-                                ${deadlineHtml}
-                                ${createdHtml}
                             </div>
+                            <div class="flex flex-wrap items-center gap-1">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isCompletedList ? 'bg-gray-100 text-gray-800' : priorityBadgeClasses[reminder.priority]}">${reminder.priority}</span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">${reminder.category || 'general'}</span>
+                                ${(reminder.category === 'shipment' && reminder.awb) ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">AWB ${reminder.awb}<button class="copy-awb-btn hover:text-indigo-900" data-awb="${(reminder.awb || '').replace(/"/g, '&quot;')}" title="Copy AWB"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></span>` : ''}
+                                ${deadlineHtml}
+                            </div>
+                            ${createdHtml}
                             ${actionButtons}
                         </div>`;
                     li.innerHTML = `
@@ -2104,6 +2108,13 @@
         });
 
         document.getElementById('reminders-content').addEventListener('click', (e) => {
+            const awbBtn = e.target.closest('.copy-awb-btn');
+            if (awbBtn) {
+                navigator.clipboard.writeText(awbBtn.dataset.awb || '')
+                    .then(() => showToast('AWB copied.'))
+                    .catch(() => showToast('Could not copy AWB.', true));
+                return;
+            }
             const editToggle = e.target.closest('.rem-edit-toggle');
             if (editToggle) {
                 const id = parseInt(editToggle.dataset.id);
