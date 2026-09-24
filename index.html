@@ -547,6 +547,15 @@
 
         <!-- Claims Approval Content -->
         <div id="claims-content" class="hidden">
+            <!-- Claims sub-tabs -->
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="-mb-px flex space-x-8" aria-label="Claims tabs">
+                    <button id="claim-sub-tab-official" class="sub-tab-btn active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Official Claims</button>
+                    <button id="claim-sub-tab-personal" class="sub-tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Personal Expenses</button>
+                </nav>
+            </div>
+
+            <div id="official-claims-section">
             <div class="bg-white p-6 shadow-md rounded-lg mb-8">
                 <h2 class="text-xl font-semibold text-[#111111] mb-4">Log Approved Claim</h2>
                 <form id="add-claim-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -595,7 +604,8 @@
                         <input type="date" id="claim-date-to" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm">
                     </div>
                 </div>
-                <div class="flex justify-end mt-3">
+                <div class="flex justify-end mt-3 gap-2">
+                    <button id="claim-download-btn" class="text-xs font-medium px-3 py-1.5 rounded-md bg-green-100 text-green-800 hover:bg-green-200">Download report</button>
                     <button id="claim-clear-filters" class="text-xs font-medium px-3 py-1.5 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Clear filters</button>
                 </div>
             </div>
@@ -621,9 +631,10 @@
                     </tfoot>
                 </table>
             </div>
+            </div><!-- /official-claims-section -->
 
             <!-- Personal Expense Tracker -->
-            <div class="mt-12 pt-8 border-t border-gray-200">
+            <div id="personal-expense-section" class="hidden">
                 <h2 class="text-xl font-semibold text-[#111111] mb-1">Personal Expense Tracker</h2>
                 <p class="text-sm text-gray-500 mb-4">Log your regular personal expenses and track what each is paid from.</p>
 
@@ -667,7 +678,7 @@
 
                 <!-- Filter -->
                 <div class="bg-white p-4 shadow-md rounded-lg mb-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
                         <div>
                             <label for="expense-search" class="block text-xs font-medium text-gray-600 mb-1">Search (expense or source)</label>
                             <input type="text" id="expense-search" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="Type to filter...">
@@ -678,8 +689,17 @@
                                 <option value="All">All sources</option>
                             </select>
                         </div>
+                        <div>
+                            <label for="expense-date-from" class="block text-xs font-medium text-gray-600 mb-1">From date</label>
+                            <input type="date" id="expense-date-from" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm">
+                        </div>
+                        <div>
+                            <label for="expense-date-to" class="block text-xs font-medium text-gray-600 mb-1">To date</label>
+                            <input type="date" id="expense-date-to" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm">
+                        </div>
                     </div>
-                    <div class="flex justify-end mt-3">
+                    <div class="flex justify-end mt-3 gap-2">
+                        <button id="expense-download-btn" class="text-xs font-medium px-3 py-1.5 rounded-md bg-green-100 text-green-800 hover:bg-green-200">Download report</button>
                         <button id="expense-clear-filters" class="text-xs font-medium px-3 py-1.5 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Clear filters</button>
                     </div>
                 </div>
@@ -746,7 +766,7 @@
         let templatesData = []; // [{ id, title, body }]
         let claimsData = []; // [{ id, date, location, expenseFor, amount }]
         let expensesData = []; // [{ id, date, name, source, recur, amount }] — personal expenses
-        let expenseFilters = { search: '', source: 'All' };
+        let expenseFilters = { search: '', source: 'All', from: '', to: '' };
         let contactsData = []; // [{ id, name, role, phone, email, comments:[{text,timestamp,done}] }]
         let contactSearch = '';
         let editingContactIds = new Set();
@@ -839,7 +859,15 @@
         const expenseSourceOptions = document.getElementById('expense-source-options');
         const expenseSourceFilter = document.getElementById('expense-source-filter');
         const expenseSearchEl = document.getElementById('expense-search');
+        const expenseDateFromEl = document.getElementById('expense-date-from');
+        const expenseDateToEl = document.getElementById('expense-date-to');
         const expenseClearFiltersBtn = document.getElementById('expense-clear-filters');
+        const expenseDownloadBtn = document.getElementById('expense-download-btn');
+        const claimDownloadBtn = document.getElementById('claim-download-btn');
+        const claimSubTabOfficial = document.getElementById('claim-sub-tab-official');
+        const claimSubTabPersonal = document.getElementById('claim-sub-tab-personal');
+        const officialClaimsSection = document.getElementById('official-claims-section');
+        const personalExpenseSection = document.getElementById('personal-expense-section');
 
         // Each signed-in user reads/writes only their own document at trackerData/{uid}.
         let docRef = null;
@@ -1568,6 +1596,8 @@
             const s = expenseFilters.search.trim().toLowerCase();
             return expensesData.filter(x => {
                 if (expenseFilters.source !== 'All' && x.source !== expenseFilters.source) return false;
+                if (expenseFilters.from && (x.date || '') < expenseFilters.from) return false;
+                if (expenseFilters.to && (x.date || '') > expenseFilters.to) return false;
                 if (s) {
                     const hay = `${x.name || ''} ${x.source || ''}`.toLowerCase();
                     if (!hay.includes(s)) return false;
@@ -2126,11 +2156,51 @@
         // Personal expenses: filters
         expenseSearchEl.addEventListener('input', () => { expenseFilters.search = expenseSearchEl.value; renderExpenses(); });
         expenseSourceFilter.addEventListener('change', () => { expenseFilters.source = expenseSourceFilter.value; renderExpenses(); });
+        expenseDateFromEl.addEventListener('change', () => { expenseFilters.from = expenseDateFromEl.value; renderExpenses(); });
+        expenseDateToEl.addEventListener('change', () => { expenseFilters.to = expenseDateToEl.value; renderExpenses(); });
         expenseClearFiltersBtn.addEventListener('click', () => {
-            expenseFilters = { search: '', source: 'All' };
+            expenseFilters = { search: '', source: 'All', from: '', to: '' };
             expenseSearchEl.value = '';
             expenseSourceFilter.value = 'All';
+            expenseDateFromEl.value = '';
+            expenseDateToEl.value = '';
             renderExpenses();
+        });
+
+        // Claims sub-tabs: Official vs Personal
+        const switchClaimSubTab = (which) => {
+            const official = which === 'official';
+            officialClaimsSection.classList.toggle('hidden', !official);
+            personalExpenseSection.classList.toggle('hidden', official);
+            claimSubTabOfficial.classList.toggle('active', official);
+            claimSubTabPersonal.classList.toggle('active', !official);
+        };
+        claimSubTabOfficial.addEventListener('click', () => switchClaimSubTab('official'));
+        claimSubTabPersonal.addEventListener('click', () => switchClaimSubTab('personal'));
+
+        // Range label helper for report filenames
+        const rangeLabel = (from, to) => (from || to) ? `_${from || 'start'}_to_${to || 'end'}` : '';
+
+        // Official claims: download filtered report (respects date range + all filters)
+        claimDownloadBtn.addEventListener('click', () => {
+            const rows = getFilteredClaims().slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+            if (rows.length === 0) { showToast('No claims match the current filters.', true); return; }
+            const out = [['Date', 'Location', 'Expense for', 'Amount']];
+            rows.forEach(c => out.push([c.date || '', c.location || '', c.expenseFor || '', c.amount]));
+            out.push(['', '', 'TOTAL', rows.reduce((s, c) => s + (Number(c.amount) || 0), 0)]);
+            downloadCSV(`official-claims${rangeLabel(claimFilters.from, claimFilters.to)}.csv`, out);
+            showToast('Claims report downloaded.');
+        });
+
+        // Personal expenses: download filtered report (respects date range + all filters)
+        expenseDownloadBtn.addEventListener('click', () => {
+            const rows = getFilteredExpenses().slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+            if (rows.length === 0) { showToast('No expenses match the current filters.', true); return; }
+            const out = [['Date', 'Expense', 'Paid from', 'Frequency', 'Amount']];
+            rows.forEach(x => out.push([x.date || '', x.name || '', x.source || '', x.recur || '', x.amount]));
+            out.push(['', '', '', 'TOTAL', rows.reduce((s, x) => s + (Number(x.amount) || 0), 0)]);
+            downloadCSV(`personal-expenses${rangeLabel(expenseFilters.from, expenseFilters.to)}.csv`, out);
+            showToast('Expense report downloaded.');
         });
 
         // Export helper: build an Excel-openable CSV and trigger a download
