@@ -319,6 +319,7 @@
                 <button id="tab-templates" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Templates</button>
                 <button id="tab-directory" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Directory</button>
                 <button id="tab-locations" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Locations</button>
+                <button id="tab-approvals" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Approvals</button>
                 <button id="tab-claims" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Claims</button>
                 <button id="tab-reports" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Reports</button>
             </nav>
@@ -608,7 +609,7 @@
                         <label for="new-loc-type" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Type</label>
                         <input type="text" id="new-loc-type" list="loc-type-options" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="station">
                         <datalist id="loc-type-options">
-                            <option value="station"></option><option value="hub"></option><option value="office"></option><option value="warehouse"></option>
+                            <option value="region"></option><option value="station"></option><option value="hub"></option><option value="office"></option><option value="warehouse"></option>
                         </datalist>
                     </div>
                     <div>
@@ -622,6 +623,49 @@
                 </form>
             </div>
             <div id="locations-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start"></div>
+        </div>
+
+        <!-- Approvals Content -->
+        <div id="approvals-content" class="hidden">
+            <div class="bg-white p-6 shadow-md rounded-lg mb-8">
+                <h2 class="text-lg font-semibold text-[#111111] mb-4">Raise an approval request</h2>
+                <form id="add-approval-form" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label for="new-approval-title" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Title</label>
+                            <input type="text" id="new-approval-title" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="e.g., Approve overtime for KMT weekend shift" required>
+                        </div>
+                        <div>
+                            <label for="new-approval-approver" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Approver (optional)</label>
+                            <input type="text" id="new-approval-approver" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="Who should sign off">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="new-approval-detail" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Detail</label>
+                        <textarea id="new-approval-detail" rows="2" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="What needs approval and why"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
+                        <div>
+                            <label for="new-approval-location" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Location</label>
+                            <select id="new-approval-location" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm"></select>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" class="inline-flex justify-center py-2 px-5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#111111] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#374151]">Submit request</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="border-b border-gray-200 mb-4 flex items-end justify-between flex-wrap gap-2">
+                <nav class="-mb-px flex space-x-8" aria-label="Approvals tabs">
+                    <button id="approval-sub-pending" class="sub-tab-btn active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Pending</button>
+                    <button id="approval-sub-decided" class="sub-tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Decided</button>
+                </nav>
+                <div class="pb-2">
+                    <select id="approvals-location-filter" class="rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-xs py-1"></select>
+                </div>
+            </div>
+            <div id="approvals-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start"></div>
         </div>
 
         <!-- Claims Approval Content -->
@@ -850,8 +894,11 @@
         let gapsData = [];
         let remindersData = [];
         let locationsData = []; // [{ id, name, code, type, group, active, order }] — user-configurable sites
+        let approvalsData = []; // [{ id, title, detail, requestedBy, approver, locationId, status, decisionBy, decisionAt, decisionNote, createdAt }]
         let gapsLocationFilter = 'All';     // '' = unassigned, 'All' = every location, else a location id
         let reminderLocationFilter = 'All';
+        let approvalsLocationFilter = 'All';
+        let approvalsView = 'pending'; // 'pending' | 'decided'
         let scheduleData = {}; // { "08:00": "plan text", ... } — one fixed recurring schedule
         let scheduleStatus = { date: '', done: {} }; // per-day completion ticks; resets when the date changes
         let templatesData = []; // [{ id, title, body }]
@@ -866,6 +913,7 @@
         let claimFilters = { search: '', location: 'All', site: 'All', from: '', to: '' };
         let activityLog = []; // [{ type: 'created'|'completed'|'escalated', priority, day: 'YYYY-MM-DD', ts }]
         let currentUserName = '';
+        let currentUserEmail = '';
         let weatherHtml = '';
         let weatherLoaded = false;
         let renderedTemplateSig = '';
@@ -961,6 +1009,12 @@
         const locationsList = document.getElementById('locations-list');
         const addLocationForm = document.getElementById('add-location-form');
         const seedSrBtn = document.getElementById('seed-sr-btn');
+        const tabApprovals = document.getElementById('tab-approvals');
+        const approvalsContent = document.getElementById('approvals-content');
+        const approvalsList = document.getElementById('approvals-list');
+        const addApprovalForm = document.getElementById('add-approval-form');
+        const approvalSubPending = document.getElementById('approval-sub-pending');
+        const approvalSubDecided = document.getElementById('approval-sub-decided');
         const claimSubTabOfficial = document.getElementById('claim-sub-tab-official');
         const claimSubTabPersonal = document.getElementById('claim-sub-tab-personal');
         const officialClaimsSection = document.getElementById('official-claims-section');
@@ -978,6 +1032,7 @@
             gaps:          'array',
             reminders:     'array',
             locations:     'array',
+            approvals:     'array',
             claims:        'array',
             expenses:      'array',
             contacts:      'array',
@@ -986,12 +1041,13 @@
             schedule:      'map',
             scheduleStatus:'map'
         };
-        const getDataset = (n) => ({ gaps: gapsData, reminders: remindersData, locations: locationsData, claims: claimsData, expenses: expensesData, contacts: contactsData, templates: templatesData, activityLog: activityLog, schedule: scheduleData, scheduleStatus: scheduleStatus }[n]);
+        const getDataset = (n) => ({ gaps: gapsData, reminders: remindersData, locations: locationsData, approvals: approvalsData, claims: claimsData, expenses: expensesData, contacts: contactsData, templates: templatesData, activityLog: activityLog, schedule: scheduleData, scheduleStatus: scheduleStatus }[n]);
         const setDataset = (n, v) => {
             switch (n) {
                 case 'gaps': gapsData = v; break;
                 case 'reminders': remindersData = v; break;
                 case 'locations': locationsData = v; break;
+                case 'approvals': approvalsData = v; break;
                 case 'claims': claimsData = v; break;
                 case 'expenses': expensesData = v; break;
                 case 'contacts': contactsData = v; break;
@@ -1022,10 +1078,10 @@
         const isAllDataEmpty = () =>
             gapsData.length === 0 && remindersData.length === 0 && templatesData.length === 0 &&
             claimsData.length === 0 && expensesData.length === 0 && contactsData.length === 0 &&
-            locationsData.length === 0 &&
+            locationsData.length === 0 && approvalsData.length === 0 &&
             activityLog.length === 0 && Object.keys(scheduleData || {}).length === 0;
 
-        const buildPayload = () => ({ gaps: gapsData, reminders: remindersData, locations: locationsData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData, claims: claimsData, expenses: expensesData, contacts: contactsData, activityLog: activityLog });
+        const buildPayload = () => ({ gaps: gapsData, reminders: remindersData, locations: locationsData, approvals: approvalsData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData, claims: claimsData, expenses: expensesData, contacts: contactsData, activityLog: activityLog });
 
         // Local safety mirror: keep the last non-empty dataset in this browser, keyed per account.
         const backupKey = () => 'opPanelBackup_' + (docRef ? docRef.id : 'anon');
@@ -1094,6 +1150,7 @@
                 appContainer.classList.remove('hidden');
                 userEmailEl.textContent = user.email || '';
                 currentUserName = user.displayName || (user.email || '').split('@')[0] || '';
+                currentUserEmail = user.email || '';
                 uidValueEl.textContent = user.uid;
                 docRef = doc(db, "trackerData", user.uid);
                 colRef = collection(db, "trackerData", user.uid, "collections");
@@ -1259,15 +1316,21 @@
             if (!lbl) return '';
             return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700" title="${esc(locationFullName(id))}">📍 ${esc(lbl)}</span>`;
         };
-        // Populate a <select> with location options. opts: { all:bool, none:bool, noneLabel }
+        // Populate a <select> with location options, grouped by type. opts: { all:bool, none:bool, noneLabel }
+        const TYPE_ORDER = ['region', 'hub', 'station'];
+        const typeGroupLabel = (t) => { const s = (t || 'other'); return s.charAt(0).toUpperCase() + s.slice(1) + (s.endsWith('s') ? '' : 's'); };
         const fillLocationSelect = (sel, selectedId, opts = {}) => {
             if (!sel) return;
             const parts = [];
             if (opts.all) parts.push(`<option value="All">All locations</option>`);
             if (opts.none) parts.push(`<option value="">${opts.noneLabel || 'No location'}</option>`);
-            activeLocations().forEach(l => {
-                const label = l.code ? `${l.code} — ${l.name || ''}` : (l.name || '(unnamed)');
-                parts.push(`<option value="${esc(l.id)}">${esc(label)}</option>`);
+            const locs = activeLocations();
+            const buckets = {};
+            locs.forEach(l => { const t = (l.type || 'other').toLowerCase(); (buckets[t] = buckets[t] || []).push(l); });
+            const orderedTypes = [...TYPE_ORDER.filter(t => buckets[t]), ...Object.keys(buckets).filter(t => !TYPE_ORDER.includes(t)).sort()];
+            const optFor = (l) => `<option value="${esc(l.id)}">${esc(l.code ? `${l.code} — ${l.name || ''}` : (l.name || '(unnamed)'))}</option>`;
+            orderedTypes.forEach(t => {
+                parts.push(`<optgroup label="${esc(typeGroupLabel(t))}">${buckets[t].map(optFor).join('')}</optgroup>`);
             });
             const val = selectedId == null ? (opts.all ? 'All' : '') : selectedId;
             sel.innerHTML = parts.join('');
@@ -1279,16 +1342,21 @@
             const g = document.getElementById('new-gap-location');
             const r = document.getElementById('new-reminder-location');
             const c = document.getElementById('new-claim-site');
+            const ap = document.getElementById('new-approval-location');
             if (g) fillLocationSelect(g, g.value || '', { none: true, noneLabel: 'No location' });
             if (r) fillLocationSelect(r, r.value || '', { none: true, noneLabel: 'No location' });
             if (c) fillLocationSelect(c, c.value || '', { none: true, noneLabel: 'No location' });
+            if (ap) fillLocationSelect(ap, ap.value || '', { none: true, noneLabel: 'No location' });
             const gf = document.getElementById('gaps-location-filter');
             const rf = document.getElementById('reminders-location-filter');
             const sf = document.getElementById('claim-site-filter');
+            const af = document.getElementById('approvals-location-filter');
             if (gf) { fillLocationSelect(gf, gapsLocationFilter, { all: true, none: true, noneLabel: 'Unassigned' }); gf.value = gapsLocationFilter; }
             if (rf) { fillLocationSelect(rf, reminderLocationFilter, { all: true, none: true, noneLabel: 'Unassigned' }); rf.value = reminderLocationFilter; }
             if (sf) { fillLocationSelect(sf, claimFilters.site, { all: true, none: true, noneLabel: 'Unassigned' }); sf.value = claimFilters.site; }
+            if (af) { fillLocationSelect(af, approvalsLocationFilter, { all: true, none: true, noneLabel: 'Unassigned' }); af.value = approvalsLocationFilter; }
         };
+        const pendingApprovalsFor = (locId) => approvalsData.filter(a => (a.status || 'pending') === 'pending' && (locId === null ? !a.locationId : a.locationId === locId)).length;
         // True if a record with locationId passes a location filter value ('All' | '' unassigned | id).
         const passesLocFilter = (recLocId, filterVal) => {
             if (filterVal === 'All') return true;
@@ -1312,7 +1380,7 @@
                 const claimsMtd = claimsData
                     .filter(c => (locId === null ? !c.locationId : c.locationId === locId) && (c.date || '').slice(0, 7) === monthPrefix)
                     .reduce((s, c) => s + (Number(c.amount) || 0), 0);
-                return { og, pend: pend.length, overdue, claimsMtd };
+                return { og, pend: pend.length, overdue, claimsMtd, appr: pendingApprovalsFor(locId) };
             };
             const card = (loc, isUnassigned) => {
                 const id = isUnassigned ? null : loc.id;
@@ -1334,11 +1402,13 @@
                         <div><p class="text-2xl font-bold text-[#111111] leading-none">${r.pend}</p><p class="text-[11px] text-gray-500 mt-1">Pending</p></div>
                         <div><p class="text-lg font-bold text-[#111111] leading-none mt-1">${fmtAmount(r.claimsMtd)}</p><p class="text-[11px] text-gray-500 mt-1">Claims MTD</p></div>
                     </div>
+                    ${r.appr ? `<div class="mt-3 pt-2 border-t border-gray-100 text-xs text-gray-600">${r.appr} approval${r.appr === 1 ? '' : 's'} awaiting decision</div>` : ''}
                 </div>`;
             };
             const locs = activeLocations();
             const hasUnassigned = gapsData.some(g => g.status !== 'Implemented' && !g.locationId)
-                || remindersData.some(r => r.status === 'pending' && !r.locationId);
+                || remindersData.some(r => r.status === 'pending' && !r.locationId)
+                || approvalsData.some(a => (a.status || 'pending') === 'pending' && !a.locationId);
             let boardHtml = locs.map(l => card(l, false)).join('');
             if (hasUnassigned) boardHtml += card(null, true);
             locationBoard.innerHTML = boardHtml || `<p class="col-span-full text-gray-500 p-4 bg-white rounded-md shadow-sm">No locations yet. Add one below, or load the Southern Region set.</p>`;
@@ -1366,6 +1436,56 @@
                     </div>`;
                 }).join('');
             }
+        };
+
+        const renderApprovals = () => {
+            const wantPending = approvalsView === 'pending';
+            const list = approvalsData
+                .filter(a => (((a.status || 'pending') === 'pending') === wantPending) && passesLocFilter(a.locationId, approvalsLocationFilter))
+                .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            if (list.length === 0) {
+                approvalsList.innerHTML = `<p class="md:col-span-2 text-gray-500 p-4 bg-white rounded-md shadow-sm">${wantPending ? 'No pending approvals.' : 'Nothing decided yet.'}</p>`;
+                return;
+            }
+            approvalsList.innerHTML = list.map(a => {
+                const pending = (a.status || 'pending') === 'pending';
+                const statusBadge = pending
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Pending</span>`
+                    : (a.status === 'approved'
+                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Approved</span>`
+                        : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Rejected</span>`);
+                const meta = [];
+                if (a.requestedBy) meta.push(`by ${esc(a.requestedBy)}`);
+                if (a.approver) meta.push(`for ${esc(a.approver)}`);
+                if (a.createdAt) meta.push(esc(new Date(a.createdAt).toLocaleDateString()));
+                const decided = !pending
+                    ? `<div class="text-xs text-gray-500 mt-2 border-t border-gray-100 pt-2">${a.status === 'approved' ? 'Approved' : 'Rejected'} by ${esc(a.decisionBy || '—')}${a.decisionAt ? ` on ${esc(new Date(a.decisionAt).toLocaleString())}` : ''}${a.decisionNote ? `<br><span class="text-gray-600">Note: ${esc(a.decisionNote)}</span>` : ''}</div>`
+                    : '';
+                const actions = pending
+                    ? `<div class="mt-3 space-y-2">
+                        <input type="text" class="approval-note block w-full rounded-md border-gray-300 shadow-sm text-xs" placeholder="Decision note (optional)" data-id="${esc(a.id)}">
+                        <div class="flex flex-wrap gap-2">
+                            <button class="approval-approve text-xs font-medium px-3 py-1.5 rounded-md bg-green-100 text-green-800 hover:bg-green-200" data-id="${esc(a.id)}">Approve</button>
+                            <button class="approval-reject text-xs font-medium px-3 py-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200" data-id="${esc(a.id)}">Reject</button>
+                            <button class="approval-delete text-xs font-medium px-2.5 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 ml-auto" data-id="${esc(a.id)}">Delete</button>
+                        </div>
+                    </div>`
+                    : `<div class="mt-3 flex justify-end"><button class="approval-delete text-xs font-medium px-2.5 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200" data-id="${esc(a.id)}">Delete</button></div>`;
+                return `
+                <div class="bg-white p-4 rounded-md shadow-sm" data-id="${esc(a.id)}">
+                    <div class="flex items-start justify-between gap-2">
+                        <p class="text-sm font-semibold text-gray-800 pr-2">${esc(a.title)}</p>
+                        ${statusBadge}
+                    </div>
+                    ${a.detail ? `<p class="text-sm text-gray-600 mt-1 whitespace-pre-wrap">${esc(a.detail)}</p>` : ''}
+                    <div class="flex flex-wrap items-center gap-2 mt-2">
+                        ${locationBadge(a.locationId)}
+                        ${meta.length ? `<span class="text-xs text-gray-400">${meta.join(' · ')}</span>` : ''}
+                    </div>
+                    ${decided}
+                    ${actions}
+                </div>`;
+            }).join('');
         };
 
         const renderGapsDashboard = () => {
@@ -2110,9 +2230,11 @@
             const claimsYestSum = claimsYesterday.reduce((s, c) => s + (Number(c.amount) || 0), 0);
             const escalatedToday = (Array.isArray(activityLog) ? activityLog : []).filter(a => a && a.type === 'escalated' && a.day === todayStr()).length;
             const highDue = attention.filter(r => r.priority === 'High').length;
+            const pendingApprovals = approvalsData.filter(a => (a.status || 'pending') === 'pending').length;
             const briefBits = [];
             if (overdue.length) briefBits.push(`<strong class="text-red-600">${overdue.length} overdue</strong>`);
             if (dueToday.length) briefBits.push(`<strong>${dueToday.length} due today</strong>${highDue ? ` (${highDue} high priority)` : ''}`);
+            if (pendingApprovals) briefBits.push(`<strong>${pendingApprovals} approval${pendingApprovals === 1 ? '' : 's'}</strong> to decide`);
             if (openGaps.length) briefBits.push(`${openGaps.length} open gap${openGaps.length === 1 ? '' : 's'}`);
             if (escalatedToday) briefBits.push(`${escalatedToday} escalated today`);
             if (claimsYesterday.length) briefBits.push(`${claimsYesterday.length} claim${claimsYesterday.length === 1 ? '' : 's'} logged yesterday (${fmtAmount(claimsYestSum)})`);
@@ -2199,6 +2321,7 @@
             renderTemplates();
             renderContacts();
             renderLocations();
+            renderApprovals();
             renderClaims();
             renderExpenses();
         };
@@ -2212,6 +2335,7 @@
             claimsContent.classList.add('hidden');
             directoryContent.classList.add('hidden');
             locationsContent.classList.add('hidden');
+            approvalsContent.classList.add('hidden');
             reportsContent.classList.add('hidden');
             tabToday.classList.remove('active');
             tabGaps.classList.remove('active');
@@ -2221,6 +2345,7 @@
             tabClaims.classList.remove('active');
             tabDirectory.classList.remove('active');
             tabLocations.classList.remove('active');
+            tabApprovals.classList.remove('active');
             tabReports.classList.remove('active');
             if (tab === 'today') {
                 todayContent.classList.remove('hidden');
@@ -2248,6 +2373,10 @@
                 locationsContent.classList.remove('hidden');
                 tabLocations.classList.add('active');
                 renderLocations();
+            } else if (tab === 'approvals') {
+                approvalsContent.classList.remove('hidden');
+                tabApprovals.classList.add('active');
+                renderApprovals();
             } else if (tab === 'reports') {
                 reportsContent.classList.remove('hidden');
                 tabReports.classList.add('active');
@@ -2289,6 +2418,7 @@
         tabTemplates.addEventListener('click', () => switchTab('templates'));
         tabDirectory.addEventListener('click', () => switchTab('directory'));
         tabLocations.addEventListener('click', () => switchTab('locations'));
+        tabApprovals.addEventListener('click', () => switchTab('approvals'));
         tabReports.addEventListener('click', () => switchTab('reports'));
         tabClaims.addEventListener('click', () => switchTab('claims'));
         gapSubTabActive.addEventListener('click', () => switchGapsView('active'));
@@ -2546,6 +2676,7 @@
 
         seedSrBtn.addEventListener('click', () => {
             const SR = [
+                { code: 'SR', name: 'Southern Region', type: 'region' },
                 { code: 'KMT', name: 'Khamis Mushayt Station' },
                 { code: 'EAM', name: 'Najran Station' },
                 { code: 'ANS', name: 'Namas Station' },
@@ -2599,6 +2730,69 @@
             if (gf) gf.value = gapsLocationFilter;
             switchTab('gaps');
             switchGapsView('active');
+        });
+
+        // ---- Approvals: raise, decide, filter, views ----
+        const switchApprovalsView = (view) => {
+            approvalsView = view;
+            approvalSubPending.classList.toggle('active', view === 'pending');
+            approvalSubDecided.classList.toggle('active', view === 'decided');
+            renderApprovals();
+        };
+        approvalSubPending.addEventListener('click', () => switchApprovalsView('pending'));
+        approvalSubDecided.addEventListener('click', () => switchApprovalsView('decided'));
+        document.getElementById('approvals-location-filter').addEventListener('change', (e) => { approvalsLocationFilter = e.target.value; renderApprovals(); });
+
+        addApprovalForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('new-approval-title').value.trim();
+            const detail = document.getElementById('new-approval-detail').value.trim();
+            const approver = document.getElementById('new-approval-approver').value.trim();
+            const locationId = (document.getElementById('new-approval-location') || {}).value || '';
+            if (!title) return;
+            const newId = 'apr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            approvalsData.push({
+                id: newId, title, detail, approver, locationId,
+                requestedBy: currentUserName || currentUserEmail || '',
+                status: 'pending', createdAt: new Date().toISOString(),
+                decisionBy: '', decisionAt: '', decisionNote: ''
+            });
+            saveDataToFirebase();
+            addApprovalForm.reset();
+            refreshLocationSelectors();
+            approvalsView = 'pending';
+            switchApprovalsView('pending');
+            showToast('Approval request submitted.');
+        });
+
+        approvalsList.addEventListener('click', (e) => {
+            const approveBtn = e.target.closest('.approval-approve');
+            const rejectBtn = e.target.closest('.approval-reject');
+            const deleteBtn = e.target.closest('.approval-delete');
+            const decide = (id, status) => {
+                const a = approvalsData.find(x => x.id === id);
+                if (!a) return;
+                const card = e.target.closest('[data-id]');
+                const noteEl = card ? card.querySelector('.approval-note') : null;
+                a.status = status;
+                a.decisionBy = currentUserName || currentUserEmail || '';
+                a.decisionAt = new Date().toISOString();
+                a.decisionNote = noteEl ? noteEl.value.trim() : '';
+                saveDataToFirebase();
+                renderApprovals();
+                showToast(status === 'approved' ? 'Approved.' : 'Rejected.');
+            };
+            if (approveBtn) decide(approveBtn.dataset.id, 'approved');
+            else if (rejectBtn) decide(rejectBtn.dataset.id, 'rejected');
+            else if (deleteBtn) {
+                const id = deleteBtn.dataset.id;
+                if (confirm('Delete this approval request?')) {
+                    approvalsData = approvalsData.filter(a => a.id !== id);
+                    saveDataToFirebase();
+                    renderApprovals();
+                    showToast('Request deleted.');
+                }
+            }
         });
 
         // Personal expenses: add
