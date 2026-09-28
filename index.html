@@ -232,8 +232,23 @@
         body.theme-dark .sub-tab-btn.active { color: #ffffff !important; border-color: #ffffff !important; }
         body.theme-dark .sub-tab-btn:not(.active) { color: #9a9a9a !important; }
         body.theme-dark #reminder-alerts { color: #fecaca !important; }
-        .reminder-title-bg { background: rgba(0,0,0,.05); }
-        body.theme-dark .reminder-title-bg { background: rgba(255,255,255,.07); }
+        /* Priority ribbon banner for reminder titles */
+        .rmb-ribbon {
+            margin: -1rem -1rem 0.5rem -1rem;
+            padding: 0.55rem 2.4rem 0.55rem 0.9rem;
+            border-top-left-radius: 0.375rem;
+            border-top-right-radius: 0.375rem;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.95rem;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        .rmb-high { background: #dc2626; }
+        .rmb-med  { background: #d97706; }
+        .rmb-low  { background: #16a34a; }
+        .rmb-done { background: #6b7280; }
+        .rmb-ribbon.rmb-done span { text-decoration: line-through; opacity: .9; }
         body.theme-dark ::-webkit-scrollbar-thumb { background: #39415c; }
         body.theme-dark ::-webkit-scrollbar-thumb:hover { background: #4b5570; }
         /* Faint full-page logo watermark, behind the glass panels */
@@ -1415,7 +1430,7 @@
                     const editing = editingReminderIds.has(reminder.id);
                     const pencilSvg = `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 4.5l3 3L8 19l-3.5.5L5 16 16.5 4.5Z"/></svg>`;
                     const checkSvg = `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
-                    const editToggleBtn = `<button class="rem-edit-toggle absolute top-0 right-0 p-1 rounded-md ${editing ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 hover:text-[#111111] hover:bg-gray-100'}" data-id="${reminder.id}" title="${editing ? 'Save' : 'Edit'}">${editing ? checkSvg : pencilSvg}</button>`;
+                    const editToggleBtn = `<button class="rem-edit-toggle absolute top-1.5 right-1.5 p-1 rounded-md z-10 ${editing ? 'text-green-600 hover:bg-green-50' : 'text-white/90 hover:text-white hover:bg-white/25'}" data-id="${reminder.id}" title="${editing ? 'Save' : 'Edit'}">${editing ? checkSvg : pencilSvg}</button>`;
                     const dlVal = reminder.deadline ? (reminder.deadline.length > 10 ? reminder.deadline : reminder.deadline + 'T00:00') : '';
                     const editBody = `
                         <div class="space-y-2 pr-6">
@@ -1442,11 +1457,12 @@
                             </select>
                             <button class="delete-reminder text-xs font-medium px-3 py-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200" data-id="${reminder.id}">Delete</button>
                         </div>`;
+                    const ribbonClass = isCompletedList ? 'rmb-done' : ({ High: 'rmb-high', Medium: 'rmb-med', Low: 'rmb-low' }[reminder.priority] || 'rmb-low');
                     const displayBody = `
-                        <div class="flex flex-col gap-2 pr-6">
-                            <div class="reminder-title-bg rounded-md px-2 py-1">
-                                <span class="${isCompletedList ? 'line-through text-gray-500' : ((reminder.deadline && isOverdue(reminder.deadline)) ? 'text-red-600 font-semibold' : 'text-gray-800 font-medium')}">${reminder.text}</span>
-                            </div>
+                        <div class="rmb-ribbon ${ribbonClass}">
+                            <span>${reminder.text}</span>
+                        </div>
+                        <div class="flex flex-col gap-2 pr-1">
                             <div class="flex flex-wrap items-center gap-1">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isCompletedList ? 'bg-gray-100 text-gray-800' : priorityBadgeClasses[reminder.priority]}">${reminder.priority}</span>
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">${reminder.category || 'general'}</span>
