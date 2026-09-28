@@ -885,14 +885,64 @@
             }, 3000);
         };
 
+        // ---- Data-loss guards: never blank-overwrite an existing account ----
+        let dataEverLoaded = false;   // true once we've loaded an existing server document
+        let allowEmptyInit = false;   // true only during genuine new-account creation
+        const isAllDataEmpty = () =>
+            gapsData.length === 0 && remindersData.length === 0 && templatesData.length === 0 &&
+            claimsData.length === 0 && expensesData.length === 0 && contactsData.length === 0 &&
+            activityLog.length === 0 && Object.keys(scheduleData || {}).length === 0;
+
+        const buildPayload = () => ({ gaps: gapsData, reminders: remindersData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData, claims: claimsData, expenses: expensesData, contacts: contactsData, activityLog: activityLog });
+
+        // Local safety mirror: keep the last non-empty dataset in this browser, keyed per account.
+        const backupKey = () => 'opPanelBackup_' + (docRef ? docRef.id : 'anon');
+        const mirrorToLocal = (payload) => {
+            try {
+                if (isAllDataEmpty()) return; // never let an empty state clobber a good local backup
+                localStorage.setItem(backupKey(), JSON.stringify({ savedAt: new Date().toISOString(), data: payload }));
+            } catch (e) {}
+        };
+
         const saveDataToFirebase = async () => {
             if (!docRef) return;
+            // Refuse to write an all-empty document unless this is a real new-account init.
+            // Stops a stray "document missing" read (e.g. from cache) from wiping loaded data.
+            if (isAllDataEmpty() && !dataEverLoaded && !allowEmptyInit) return;
+            const payload = buildPayload();
+            mirrorToLocal(payload);
             try {
-                await setDoc(docRef, { gaps: gapsData, reminders: remindersData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData, claims: claimsData, expenses: expensesData, contacts: contactsData, activityLog: activityLog });
+                await setDoc(docRef, payload);
             } catch (error) {
                 console.error("Error saving data to Firebase:", error);
                 showToast("Network/permission error with Firestore.", true);
             }
+        };
+
+        // Manual restore: run window.opRestoreBackup() in the browser console to push the
+        // last local backup for this account back to Firestore.
+        window.opRestoreBackup = async () => {
+            try {
+                const raw = localStorage.getItem(backupKey());
+                if (!raw) { console.warn('No local backup found for this account.'); showToast('No local backup found.', true); return; }
+                const b = JSON.parse(raw);
+                const d = b.data || {};
+                gapsData = d.gaps || [];
+                remindersData = d.reminders || [];
+                scheduleData = d.schedule || {};
+                scheduleStatus = d.scheduleStatus || { date: '', done: {} };
+                templatesData = d.templates || [];
+                claimsData = d.claims || [];
+                expensesData = d.expenses || [];
+                contactsData = d.contacts || [];
+                activityLog = d.activityLog || [];
+                remindersData.forEach(r => { if (!r.remarks) r.remarks = []; });
+                dataEverLoaded = true;
+                if (docRef) await setDoc(docRef, buildPayload());
+                refreshUI();
+                showToast(`Restored local backup from ${b.savedAt || 'unknown time'}.`);
+                console.log('Restored backup saved at', b.savedAt);
+            } catch (e) { console.error('Restore failed:', e); showToast('Restore failed — see console.', true); }
         };
 
         // ---------- AUTH ----------
@@ -957,10 +1007,10 @@
         // ---------- DATA SYNC ----------
         const startDataSync = () => {
             if (unsubscribeSnapshot) return;
-            unsubscribeSnapshot = onSnapshot(docRef, (docSnapshot) => {
+            // includeMetadataChanges lets us tell a cache read from a server read.
+            unsubscribeSnapshot = onSnapshot(docRef, { includeMetadataChanges: true }, (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     const data = docSnapshot.data();
-                    // Seed bug fixed: once the doc exists, an empty list stays empty.
                     gapsData = data.gaps || [];
                     remindersData = data.reminders || [];
                     scheduleData = migrateSchedule(data.schedule || {});
@@ -971,10 +1021,12 @@
                     contactsData = data.contacts || [];
                     activityLog = data.activityLog || [];
                     remindersData.forEach(r => { if (!r.remarks) r.remarks = []; });
+                    dataEverLoaded = true;
                     refreshUI();
-                } else {
-                    // User doc doesn't exist yet: try a one-time copy of the old shared data,
-                    // otherwise start blank. New users cannot read shared, so they begin empty.
+                } else if (!docSnapshot.metadata.fromCache) {
+                    // ONLY act on a server-confirmed "missing". A cache-only "missing"
+                    // (common right after login) is ignored — we wait for the server,
+                    // so we never wipe a real document that the cache hasn't seen yet.
                     migrateOrInit();
                 }
             }, (error) => {
@@ -986,6 +1038,9 @@
         const migrateOrInit = async () => {
             if (!docRef) return;
             try {
+                // Re-verify against the server that the doc truly doesn't exist before writing anything.
+                const selfSnap = await getDoc(docRef);
+                if (selfSnap.exists()) return; // real doc present — the listener will load it; never overwrite
                 const sharedSnap = await getDoc(sharedRef);
                 if (sharedSnap.exists()) {
                     const d = sharedSnap.data();
@@ -1004,8 +1059,11 @@
                     return; // snapshot fires again with the copied data
                 }
             } catch (e) {
-                // No permission to read shared (a normal new user) — fall through to a blank start.
+                // A read failed (transient network / permission). Do NOT write a blank doc — bail safely.
+                console.error('Init check failed; not writing blank:', e);
+                return;
             }
+            // Confirmed brand-new account: create an empty document, explicitly allowed this once.
             gapsData = [];
             remindersData = [];
             scheduleData = {};
@@ -1015,7 +1073,9 @@
             expensesData = [];
             contactsData = [];
             activityLog = [];
-            saveDataToFirebase();
+            allowEmptyInit = true;
+            await saveDataToFirebase();
+            allowEmptyInit = false;
         };
 
         // ---------- RENDER ----------
