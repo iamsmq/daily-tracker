@@ -91,8 +91,10 @@
         @media (min-width: 768px) { .tab-bar nav { gap: .25rem; } }
         .tab-btn {
             border-radius: 9px;
+            display: flex; align-items: center; gap: .6rem;
             transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
         }
+        .tab-btn .tab-ico { flex: 0 0 auto; display: inline-flex; opacity: .85; }
         .tab-btn.active { background-color: var(--navy); color: #fff; box-shadow: var(--shadow-sm); }
         .tab-btn:not(.active) { background-color: transparent; color: #55617a; }
         .tab-btn:not(.active):hover { background-color: #eef1f6; color: var(--navy); }
@@ -312,16 +314,18 @@
         <div class="flex flex-col md:flex-row gap-6 items-start">
         <aside class="tab-bar w-full md:w-52 shrink-0 md:sticky md:top-6">
             <nav class="flex md:flex-col" aria-label="Tabs">
-                <button id="tab-today" class="tab-btn active text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Today</button>
-                <button id="tab-gaps" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Gaps Tracker</button>
-                <button id="tab-reminders" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Reminders</button>
-                <button id="tab-schedule" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Schedule</button>
-                <button id="tab-templates" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Templates</button>
-                <button id="tab-directory" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Directory</button>
-                <button id="tab-locations" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Locations</button>
-                <button id="tab-approvals" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Approvals</button>
-                <button id="tab-claims" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Claims</button>
-                <button id="tab-reports" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Reports</button>
+                <button id="tab-today" class="tab-btn active text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none"><span class="tab-ico"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 11.5 12 4l9 7.5M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/></svg></span><span>Today</span></button>
+                <button id="tab-search" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none"><span class="tab-ico"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-3.5-3.5"/></svg></span><span>Search</span></button>
+                <button id="tab-gaps" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none"><span class="tab-ico"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21V4m0 0h11l-1.5 3.5L15 11H4"/></svg></span><span>Gaps Tracker</span></button>
+                <button id="tab-reminders" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none"><span class="tab-ico"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M14.9 17.1a3 3 0 0 1-5.8 0m8.4-5.1V9a5.5 5.5 0 1 0-11 0v3l-1.6 3.2c-.3.7.2 1.4.9 1.4h12.4c.7 0 1.2-.7.9-1.4L17.5 12Z"/></svg></span><span>Reminders</span></button>
+                <button id="tab-schedule" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none"><span class="tab-ico"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path stroke-linecap="round" d="M3.5 9h17M8 3v4m8-4v4"/></svg></span><span>Schedule</span></button>
+                <button id="tab-templates" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none"><span class="tab-ico"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path stroke-linecap="round" d="M13 3v6h6"/></svg></span><span>Templates</span></button>
+                <button id="tab-vault" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none"><span class="tab-ico"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M5 4h11a2 2 0 0 1 2 2v14l-4-2-4 2V4"/><path stroke-linecap="round" d="M5 4v16a1 1 0 0 0 1 1h1"/></svg></span><span>Docs Vault</span></button>
+                <button id="tab-directory" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none"><span class="tab-ico"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M4 20a5 5 0 0 1 10 0M17 11a3 3 0 0 0 0-6m3 15a5 5 0 0 0-4-4.9"/></svg></span><span>Directory</span></button>
+                <button id="tab-locations" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none"><span class="tab-ico"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span>Locations</span></button>
+                <button id="tab-approvals" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none"><span class="tab-ico"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m9 12 2 2 4-4M12 3l2.3 1.6 2.8-.2 1 2.6 2.3 1.6-.8 2.7.8 2.7-2.3 1.6-1 2.6-2.8-.2L12 21l-2.3-1.6-2.8.2-1-2.6L3.6 15l.8-2.7-.8-2.7 2.3-1.6 1-2.6 2.8.2Z"/></svg></span><span>Approvals</span></button>
+                <button id="tab-claims" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none"><span class="tab-ico"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 3v18l2-1 2 1 2-1 2 1 2-1 2 1V3l-2 1-2-1-2 1-2-1-2 1-2-1Zm3 6h6M9 13h6"/></svg></span><span>Claims</span></button>
+                <button id="tab-reports" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none"><span class="tab-ico"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 20h16M7 20v-6m5 6V8m5 12v-9"/></svg></span><span>Reports</span></button>
             </nav>
         </aside>
         <main class="flex-grow min-w-0 w-full">
@@ -362,6 +366,10 @@
                             <label for="new-gap-location" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Location</label>
                             <select id="new-gap-location" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm"></select>
                         </div>
+                    </div>
+                    <div>
+                        <label for="new-gap-tags" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Tags (comma separated)</label>
+                        <input type="text" id="new-gap-tags" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="e.g., safety, routing, urgent">
                     </div>
                     <div class="flex justify-end">
                         <button type="submit" class="inline-flex justify-center py-2 px-5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#111111] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#374151]">Add gap</button>
@@ -459,6 +467,10 @@
                             <label for="new-reminder-location" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Location</label>
                             <select id="new-reminder-location" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm"></select>
                         </div>
+                    </div>
+                    <div>
+                        <label for="new-reminder-tags" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Tags (comma separated)</label>
+                        <input type="text" id="new-reminder-tags" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="e.g., follow-up, warehouse">
                     </div>
                     <div class="flex justify-end">
                         <button type="submit" class="inline-flex justify-center py-2 px-5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#111111] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#374151]">Add reminder</button>
@@ -666,6 +678,63 @@
                 </div>
             </div>
             <div id="approvals-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start"></div>
+        </div>
+
+        <!-- Search Content -->
+        <div id="search-content" class="hidden">
+            <div class="bg-white p-6 shadow-md rounded-lg mb-6">
+                <label for="global-search" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-2">Search everything</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-3.5-3.5"/></svg>
+                    </span>
+                    <input type="text" id="global-search" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm pl-10 py-2.5" placeholder="Search gaps, reminders, claims, approvals, contacts, templates, docs...">
+                </div>
+                <div id="search-tags" class="flex flex-wrap gap-1.5 mt-3"></div>
+            </div>
+            <div id="search-results"></div>
+        </div>
+
+        <!-- Docs Vault Content -->
+        <div id="vault-content" class="hidden">
+            <div class="bg-white p-6 shadow-md rounded-lg mb-8">
+                <h2 class="text-lg font-semibold text-[#111111] mb-1">Add a document link</h2>
+                <p class="text-sm text-gray-500 mb-4">Store links to SOPs and documents that live in Drive, SharePoint or anywhere else. The app keeps the pointer, not the file.</p>
+                <form id="add-vault-form" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label for="new-vault-title" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Title</label>
+                            <input type="text" id="new-vault-title" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="e.g., Delivery SOP v3" required>
+                        </div>
+                        <div>
+                            <label for="new-vault-url" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Link (URL)</label>
+                            <input type="url" id="new-vault-url" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="https://drive.google.com/..." required>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="md:col-span-1">
+                            <label for="new-vault-location" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Location</label>
+                            <select id="new-vault-location" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm"></select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="new-vault-tags" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Tags (comma separated)</label>
+                            <input type="text" id="new-vault-tags" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="e.g., sop, delivery, safety">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="new-vault-desc" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Description (optional)</label>
+                        <input type="text" id="new-vault-desc" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="What is this and when to use it">
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="inline-flex justify-center py-2 px-5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#111111] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#374151]">Add link</button>
+                    </div>
+                </form>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+                <select id="vault-location-filter" class="rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-xs py-1"></select>
+                <div id="vault-tag-chips" class="flex flex-wrap gap-1.5"></div>
+            </div>
+            <div id="vault-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start"></div>
         </div>
 
         <!-- Claims Approval Content -->
@@ -895,10 +964,15 @@
         let remindersData = [];
         let locationsData = []; // [{ id, name, code, type, group, active, order }] — user-configurable sites
         let approvalsData = []; // [{ id, title, detail, requestedBy, approver, locationId, status, decisionBy, decisionAt, decisionNote, createdAt }]
+        let vaultData = []; // [{ id, title, url, description, tags:[], locationId, createdAt }] — links to SOPs/docs (no file hosting)
         let gapsLocationFilter = 'All';     // '' = unassigned, 'All' = every location, else a location id
         let reminderLocationFilter = 'All';
         let approvalsLocationFilter = 'All';
         let approvalsView = 'pending'; // 'pending' | 'decided'
+        let vaultLocationFilter = 'All';
+        let vaultTagFilter = '';   // '' = all tags
+        let searchQuery = '';      // global search text
+        let searchTagFilter = '';  // global search active tag
         let scheduleData = {}; // { "08:00": "plan text", ... } — one fixed recurring schedule
         let scheduleStatus = { date: '', done: {} }; // per-day completion ticks; resets when the date changes
         let templatesData = []; // [{ id, title, body }]
@@ -1015,6 +1089,16 @@
         const addApprovalForm = document.getElementById('add-approval-form');
         const approvalSubPending = document.getElementById('approval-sub-pending');
         const approvalSubDecided = document.getElementById('approval-sub-decided');
+        const tabSearch = document.getElementById('tab-search');
+        const searchContent = document.getElementById('search-content');
+        const globalSearchEl = document.getElementById('global-search');
+        const searchResultsEl = document.getElementById('search-results');
+        const searchTagsEl = document.getElementById('search-tags');
+        const tabVault = document.getElementById('tab-vault');
+        const vaultContent = document.getElementById('vault-content');
+        const vaultListEl = document.getElementById('vault-list');
+        const addVaultForm = document.getElementById('add-vault-form');
+        const vaultTagChipsEl = document.getElementById('vault-tag-chips');
         const claimSubTabOfficial = document.getElementById('claim-sub-tab-official');
         const claimSubTabPersonal = document.getElementById('claim-sub-tab-personal');
         const officialClaimsSection = document.getElementById('official-claims-section');
@@ -1033,6 +1117,7 @@
             reminders:     'array',
             locations:     'array',
             approvals:     'array',
+            vault:         'array',
             claims:        'array',
             expenses:      'array',
             contacts:      'array',
@@ -1041,13 +1126,14 @@
             schedule:      'map',
             scheduleStatus:'map'
         };
-        const getDataset = (n) => ({ gaps: gapsData, reminders: remindersData, locations: locationsData, approvals: approvalsData, claims: claimsData, expenses: expensesData, contacts: contactsData, templates: templatesData, activityLog: activityLog, schedule: scheduleData, scheduleStatus: scheduleStatus }[n]);
+        const getDataset = (n) => ({ gaps: gapsData, reminders: remindersData, locations: locationsData, approvals: approvalsData, vault: vaultData, claims: claimsData, expenses: expensesData, contacts: contactsData, templates: templatesData, activityLog: activityLog, schedule: scheduleData, scheduleStatus: scheduleStatus }[n]);
         const setDataset = (n, v) => {
             switch (n) {
                 case 'gaps': gapsData = v; break;
                 case 'reminders': remindersData = v; break;
                 case 'locations': locationsData = v; break;
                 case 'approvals': approvalsData = v; break;
+                case 'vault': vaultData = v; break;
                 case 'claims': claimsData = v; break;
                 case 'expenses': expensesData = v; break;
                 case 'contacts': contactsData = v; break;
@@ -1078,10 +1164,10 @@
         const isAllDataEmpty = () =>
             gapsData.length === 0 && remindersData.length === 0 && templatesData.length === 0 &&
             claimsData.length === 0 && expensesData.length === 0 && contactsData.length === 0 &&
-            locationsData.length === 0 && approvalsData.length === 0 &&
+            locationsData.length === 0 && approvalsData.length === 0 && vaultData.length === 0 &&
             activityLog.length === 0 && Object.keys(scheduleData || {}).length === 0;
 
-        const buildPayload = () => ({ gaps: gapsData, reminders: remindersData, locations: locationsData, approvals: approvalsData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData, claims: claimsData, expenses: expensesData, contacts: contactsData, activityLog: activityLog });
+        const buildPayload = () => ({ gaps: gapsData, reminders: remindersData, locations: locationsData, approvals: approvalsData, vault: vaultData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData, claims: claimsData, expenses: expensesData, contacts: contactsData, activityLog: activityLog });
 
         // Local safety mirror: keep the last non-empty dataset in this browser, keyed per account.
         const backupKey = () => 'opPanelBackup_' + (docRef ? docRef.id : 'anon');
@@ -1343,18 +1429,22 @@
             const r = document.getElementById('new-reminder-location');
             const c = document.getElementById('new-claim-site');
             const ap = document.getElementById('new-approval-location');
+            const vl = document.getElementById('new-vault-location');
             if (g) fillLocationSelect(g, g.value || '', { none: true, noneLabel: 'No location' });
             if (r) fillLocationSelect(r, r.value || '', { none: true, noneLabel: 'No location' });
             if (c) fillLocationSelect(c, c.value || '', { none: true, noneLabel: 'No location' });
             if (ap) fillLocationSelect(ap, ap.value || '', { none: true, noneLabel: 'No location' });
+            if (vl) fillLocationSelect(vl, vl.value || '', { none: true, noneLabel: 'No location' });
             const gf = document.getElementById('gaps-location-filter');
             const rf = document.getElementById('reminders-location-filter');
             const sf = document.getElementById('claim-site-filter');
             const af = document.getElementById('approvals-location-filter');
+            const vf = document.getElementById('vault-location-filter');
             if (gf) { fillLocationSelect(gf, gapsLocationFilter, { all: true, none: true, noneLabel: 'Unassigned' }); gf.value = gapsLocationFilter; }
             if (rf) { fillLocationSelect(rf, reminderLocationFilter, { all: true, none: true, noneLabel: 'Unassigned' }); rf.value = reminderLocationFilter; }
             if (sf) { fillLocationSelect(sf, claimFilters.site, { all: true, none: true, noneLabel: 'Unassigned' }); sf.value = claimFilters.site; }
             if (af) { fillLocationSelect(af, approvalsLocationFilter, { all: true, none: true, noneLabel: 'Unassigned' }); af.value = approvalsLocationFilter; }
+            if (vf) { fillLocationSelect(vf, vaultLocationFilter, { all: true, none: true, noneLabel: 'Unassigned' }); vf.value = vaultLocationFilter; }
         };
         const pendingApprovalsFor = (locId) => approvalsData.filter(a => (a.status || 'pending') === 'pending' && (locId === null ? !a.locationId : a.locationId === locId)).length;
         // True if a record with locationId passes a location filter value ('All' | '' unassigned | id).
@@ -1486,6 +1576,170 @@
                     ${actions}
                 </div>`;
             }).join('');
+        };
+
+        // ---- Tags ----
+        const parseTags = (str) => {
+            const seen = new Set(); const out = [];
+            String(str || '').split(',').map(t => t.trim()).filter(Boolean).forEach(t => {
+                const k = t.toLowerCase();
+                if (!seen.has(k)) { seen.add(k); out.push(t); }
+            });
+            return out;
+        };
+        const tagChip = (t, active) => `<button class="tag-chip inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${active ? 'bg-[#111111] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" data-tag="${esc(t)}">#${esc(t)}</button>`;
+        const tagsInline = (arr) => (Array.isArray(arr) && arr.length)
+            ? `<span class="inline-flex flex-wrap gap-1">${arr.map(t => `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600">#${esc(t)}</span>`).join('')}</span>`
+            : '';
+        const allTags = () => {
+            const s = new Map(); // lowercase -> display
+            [...gapsData, ...remindersData, ...vaultData].forEach(r => (r.tags || []).forEach(t => { const k = String(t).toLowerCase(); if (!s.has(k)) s.set(k, t); }));
+            return [...s.values()].sort((a, b) => a.localeCompare(b));
+        };
+
+        // ---- Empty states (design: fill blank areas with a visual, not a bare line) ----
+        const emptyIcons = {
+            box: `<svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l9-5 9 5v8l-9 5-9-5V8Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l9 5 9-5M12 13v8"/></svg>`,
+            search: `<svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-3.5-3.5"/></svg>`,
+            docs: `<svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M5 4h11a2 2 0 0 1 2 2v14l-4-2-4 2V4"/></svg>`,
+            check: `<svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7"/></svg>`
+        };
+        const emptyState = (msg, icon = 'box', sub = '') => `
+            <div class="flex flex-col items-center justify-center text-center py-14 px-4 bg-white rounded-lg shadow-sm">
+                <div class="h-14 w-14 rounded-2xl bg-gray-100 text-gray-400 flex items-center justify-center mb-3">${emptyIcons[icon] || emptyIcons.box}</div>
+                <p class="text-sm font-medium text-gray-600">${esc(msg)}</p>
+                ${sub ? `<p class="text-xs text-gray-400 mt-1">${esc(sub)}</p>` : ''}
+            </div>`;
+
+        // ---- Docs Vault ----
+        const renderVault = () => {
+            // tag chips
+            const tagsForLoc = vaultData.filter(v => passesLocFilter(v.locationId, vaultLocationFilter));
+            const tset = new Map();
+            tagsForLoc.forEach(v => (v.tags || []).forEach(t => { const k = String(t).toLowerCase(); if (!tset.has(k)) tset.set(k, t); }));
+            const tags = [...tset.values()].sort((a, b) => a.localeCompare(b));
+            vaultTagChipsEl.innerHTML = tags.length
+                ? [`<button class="tag-chip inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${!vaultTagFilter ? 'bg-[#111111] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}" data-tag="">All</button>`,
+                   ...tags.map(t => tagChip(t, vaultTagFilter.toLowerCase() === t.toLowerCase()))].join('')
+                : '';
+            const list = vaultData
+                .filter(v => passesLocFilter(v.locationId, vaultLocationFilter))
+                .filter(v => !vaultTagFilter || (v.tags || []).some(t => t.toLowerCase() === vaultTagFilter.toLowerCase()))
+                .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            if (list.length === 0) {
+                vaultListEl.innerHTML = `<div class="sm:col-span-2 lg:col-span-3">${emptyState('No document links yet.', 'docs', 'Add a link to an SOP or file that lives in Drive or SharePoint.')}</div>`;
+                return;
+            }
+            vaultListEl.innerHTML = list.map(v => {
+                let host = '';
+                try { host = new URL(v.url).hostname.replace(/^www\./, ''); } catch (e) { host = ''; }
+                return `
+                <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col" data-id="${esc(v.id)}">
+                    <div class="flex items-start justify-between gap-2">
+                        <a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-[#111111] hover:underline break-words">${esc(v.title)}</a>
+                        <button class="vault-delete text-gray-300 hover:text-red-600 shrink-0" data-id="${esc(v.id)}" title="Delete link"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9 7V5h6v2m-7 0 1 12h6l1-12"/></svg></button>
+                    </div>
+                    ${v.description ? `<p class="text-xs text-gray-600 mt-1 break-words">${esc(v.description)}</p>` : ''}
+                    <div class="flex flex-wrap items-center gap-1.5 mt-2">
+                        ${locationBadge(v.locationId)}
+                        ${tagsInline(v.tags)}
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
+                        <span class="text-[11px] text-gray-400 truncate">${esc(host || v.url)}</span>
+                        <a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer" class="text-xs font-medium px-2.5 py-1 rounded-md bg-[#111111] text-white hover:bg-opacity-90 shrink-0">Open</a>
+                    </div>
+                </div>`;
+            }).join('');
+        };
+
+        // ---- Global search ----
+        const stripTags = (s) => String(s || '').replace(/<[^>]+>/g, ' ');
+        const buildSearchIndex = () => {
+            const items = [];
+            gapsData.forEach(g => items.push({
+                kind: 'Gap', tab: 'gaps', title: g.gap || '(untitled gap)',
+                snippet: g.action || '', locationId: g.locationId, tags: g.tags || [],
+                hay: [g.gap, g.action, g.responsible, g.accountable, (g.comments || []).map(c => c.text).join(' '), (g.tags || []).join(' ')].join(' ').toLowerCase()
+            }));
+            remindersData.forEach(r => items.push({
+                kind: 'Reminder', tab: 'reminders', title: r.text || '(untitled)',
+                snippet: [r.priority, r.category, r.awb ? 'AWB ' + r.awb : ''].filter(Boolean).join(' · '),
+                locationId: r.locationId, tags: r.tags || [],
+                hay: [r.text, r.awb, r.category, (r.remarks || []).map(x => x.text).join(' '), (r.tags || []).join(' ')].join(' ').toLowerCase()
+            }));
+            claimsData.forEach(c => items.push({
+                kind: 'Claim', tab: 'claims', title: c.expenseFor || '(claim)',
+                snippet: [c.date, c.location, fmtAmount(c.amount)].filter(Boolean).join(' · '),
+                locationId: c.locationId, tags: [],
+                hay: [c.expenseFor, c.location, c.date].join(' ').toLowerCase()
+            }));
+            approvalsData.forEach(a => items.push({
+                kind: 'Approval', tab: 'approvals', title: a.title || '(approval)',
+                snippet: [(a.status || 'pending'), a.approver ? 'for ' + a.approver : ''].filter(Boolean).join(' · '),
+                locationId: a.locationId, tags: [],
+                hay: [a.title, a.detail, a.approver, a.requestedBy].join(' ').toLowerCase()
+            }));
+            contactsData.forEach(c => items.push({
+                kind: 'Contact', tab: 'directory', title: c.name || '(contact)',
+                snippet: [c.role, c.phone].filter(Boolean).join(' · '), locationId: '', tags: [],
+                hay: [c.name, c.role, c.phone, c.ext, c.email, (c.comments || []).map(x => x.text).join(' ')].join(' ').toLowerCase()
+            }));
+            templatesData.forEach(t => items.push({
+                kind: 'Template', tab: 'templates', title: t.title || '(template)',
+                snippet: stripTags(t.body).slice(0, 80), locationId: '', tags: [],
+                hay: [t.title, stripTags(t.body)].join(' ').toLowerCase()
+            }));
+            vaultData.forEach(v => items.push({
+                kind: 'Doc', tab: 'vault', title: v.title || '(doc)',
+                snippet: v.description || v.url, locationId: v.locationId, tags: v.tags || [],
+                hay: [v.title, v.description, v.url, (v.tags || []).join(' ')].join(' ').toLowerCase()
+            }));
+            return items;
+        };
+        const kindStyle = {
+            Gap: 'bg-blue-100 text-blue-800', Reminder: 'bg-amber-100 text-amber-800', Claim: 'bg-yellow-100 text-yellow-800',
+            Approval: 'bg-green-100 text-green-800', Contact: 'bg-purple-100 text-purple-800', Template: 'bg-slate-100 text-slate-700', Doc: 'bg-indigo-100 text-indigo-800'
+        };
+        const renderSearch = () => {
+            // tag chips
+            const tags = allTags();
+            searchTagsEl.innerHTML = tags.length
+                ? [`<span class="text-xs text-gray-400 mr-1 self-center">Tags:</span>`,
+                   ...tags.map(t => tagChip(t, searchTagFilter.toLowerCase() === t.toLowerCase()))].join('')
+                : '';
+            const q = searchQuery.trim().toLowerCase();
+            if (!q && !searchTagFilter) {
+                searchResultsEl.innerHTML = emptyState('Search across everything.', 'search', 'Type to find a gap, reminder, claim, approval, contact, template or doc. Or pick a tag.');
+                return;
+            }
+            let items = buildSearchIndex();
+            if (searchTagFilter) items = items.filter(it => (it.tags || []).some(t => t.toLowerCase() === searchTagFilter.toLowerCase()));
+            if (q) items = items.filter(it => it.hay.includes(q));
+            if (items.length === 0) {
+                searchResultsEl.innerHTML = emptyState('No matches.', 'search', 'Try a different word or tag.');
+                return;
+            }
+            // group by kind
+            const groups = {};
+            items.forEach(it => { (groups[it.kind] = groups[it.kind] || []).push(it); });
+            const order = ['Gap', 'Reminder', 'Approval', 'Claim', 'Contact', 'Template', 'Doc'];
+            const sortedKinds = [...order.filter(k => groups[k]), ...Object.keys(groups).filter(k => !order.includes(k))];
+            searchResultsEl.innerHTML = `<p class="text-xs text-gray-500 mb-3">${items.length} result${items.length === 1 ? '' : 's'}${searchTagFilter ? ` tagged #${esc(searchTagFilter)}` : ''}${q ? ` for “${esc(searchQuery.trim())}”` : ''}</p>` +
+                sortedKinds.map(kind => `
+                <div class="mb-5">
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">${esc(kind)}s <span class="text-gray-300">(${groups[kind].length})</span></h3>
+                    <div class="space-y-2">
+                        ${groups[kind].map(it => `
+                            <button class="search-result w-full text-left bg-white rounded-lg shadow-sm p-3 hover:shadow-md transition-shadow flex items-start gap-3" data-tab="${esc(it.tab)}">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium shrink-0 ${kindStyle[it.kind] || 'bg-gray-100 text-gray-700'}">${esc(it.kind)}</span>
+                                <span class="min-w-0 flex-grow">
+                                    <span class="block text-sm font-medium text-gray-800 truncate">${esc(it.title)}</span>
+                                    ${it.snippet ? `<span class="block text-xs text-gray-500 truncate">${esc(it.snippet)}</span>` : ''}
+                                    <span class="flex flex-wrap items-center gap-1 mt-1">${locationBadge(it.locationId)}${tagsInline(it.tags)}</span>
+                                </span>
+                            </button>`).join('')}
+                    </div>
+                </div>`).join('');
         };
 
         const renderGapsDashboard = () => {
@@ -1665,7 +1919,7 @@
                     <td class="px-2 py-2 whitespace-nowrap text-xs text-gray-500">${item.date || 'N/A'}</td>
                     <td class="px-2 py-2 text-sm text-gray-700 align-top">
                         <div contenteditable="true" data-field="gap" data-id="${item.id}" class="focus:outline-none rounded px-1 -mx-1">${esc(item.gap)}</div>
-                        ${item.locationId ? `<div class="mt-1">${locationBadge(item.locationId)}</div>` : ''}
+                        ${(item.locationId || (item.tags && item.tags.length)) ? `<div class="mt-1 flex flex-wrap items-center gap-1">${locationBadge(item.locationId)}${tagsInline(item.tags)}</div>` : ''}
                     </td>
                     <td class="px-2 py-2 text-sm text-gray-700 align-top">
                         <div class="text-gray-700 focus:outline-none rounded px-1 -mx-1" contenteditable="true" data-field="action" data-id="${item.id}">${formattedAction}</div>
@@ -1795,6 +2049,7 @@
                                 <option value="">No location</option>
                                 ${activeLocations().map(l => `<option value="${esc(l.id)}" ${reminder.locationId === l.id ? 'selected' : ''}>${esc(l.code ? `${l.code} — ${l.name || ''}` : (l.name || ''))}</option>`).join('')}
                             </select>
+                            <input type="text" class="rem-edit-tags block w-full rounded-md border-gray-300 shadow-sm text-sm" value="${esc((reminder.tags || []).join(', '))}" placeholder="Tags (comma separated)">
                             <select class="rem-edit-field rounded-md border-gray-300 shadow-sm text-sm" data-field="recurPeriod">
                                 <option value="daily" ${reminder.recurPeriod === 'daily' ? 'selected' : ''}>Repeat: Day</option>
                                 <option value="weekly" ${(reminder.recurPeriod === 'weekly' || !reminder.recurPeriod) ? 'selected' : ''}>Repeat: Week</option>
@@ -1812,6 +2067,7 @@
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isCompletedList ? 'bg-gray-100 text-gray-800' : priorityBadgeClasses[reminder.priority]}">${reminder.priority}</span>
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">${reminder.category || 'general'}</span>
                                 ${locationBadge(reminder.locationId)}
+                                ${tagsInline(reminder.tags)}
                                 ${(reminder.category === 'shipment' && reminder.awb) ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">AWB ${esc(reminder.awb)}<button class="copy-awb-btn hover:text-indigo-900" data-awb="${esc(reminder.awb)}" title="Copy AWB"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></span>` : ''}
                                 ${deadlineHtml}
                             </div>
@@ -2322,6 +2578,8 @@
             renderContacts();
             renderLocations();
             renderApprovals();
+            renderVault();
+            if (!searchContent.classList.contains('hidden')) renderSearch();
             renderClaims();
             renderExpenses();
         };
@@ -2336,6 +2594,8 @@
             directoryContent.classList.add('hidden');
             locationsContent.classList.add('hidden');
             approvalsContent.classList.add('hidden');
+            searchContent.classList.add('hidden');
+            vaultContent.classList.add('hidden');
             reportsContent.classList.add('hidden');
             tabToday.classList.remove('active');
             tabGaps.classList.remove('active');
@@ -2346,6 +2606,8 @@
             tabDirectory.classList.remove('active');
             tabLocations.classList.remove('active');
             tabApprovals.classList.remove('active');
+            tabSearch.classList.remove('active');
+            tabVault.classList.remove('active');
             tabReports.classList.remove('active');
             if (tab === 'today') {
                 todayContent.classList.remove('hidden');
@@ -2377,6 +2639,15 @@
                 approvalsContent.classList.remove('hidden');
                 tabApprovals.classList.add('active');
                 renderApprovals();
+            } else if (tab === 'search') {
+                searchContent.classList.remove('hidden');
+                tabSearch.classList.add('active');
+                renderSearch();
+                setTimeout(() => globalSearchEl && globalSearchEl.focus(), 30);
+            } else if (tab === 'vault') {
+                vaultContent.classList.remove('hidden');
+                tabVault.classList.add('active');
+                renderVault();
             } else if (tab === 'reports') {
                 reportsContent.classList.remove('hidden');
                 tabReports.classList.add('active');
@@ -2419,6 +2690,8 @@
         tabDirectory.addEventListener('click', () => switchTab('directory'));
         tabLocations.addEventListener('click', () => switchTab('locations'));
         tabApprovals.addEventListener('click', () => switchTab('approvals'));
+        tabSearch.addEventListener('click', () => switchTab('search'));
+        tabVault.addEventListener('click', () => switchTab('vault'));
         tabReports.addEventListener('click', () => switchTab('reports'));
         tabClaims.addEventListener('click', () => switchTab('claims'));
         gapSubTabActive.addEventListener('click', () => switchGapsView('active'));
@@ -2743,6 +3016,57 @@
         approvalSubDecided.addEventListener('click', () => switchApprovalsView('decided'));
         document.getElementById('approvals-location-filter').addEventListener('change', (e) => { approvalsLocationFilter = e.target.value; renderApprovals(); });
 
+        // ---- Docs Vault: add, delete, filter ----
+        addVaultForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('new-vault-title').value.trim();
+            const url = document.getElementById('new-vault-url').value.trim();
+            const description = document.getElementById('new-vault-desc').value.trim();
+            const tags = parseTags(document.getElementById('new-vault-tags').value);
+            const locationId = (document.getElementById('new-vault-location') || {}).value || '';
+            if (!title || !url) return;
+            vaultData.push({ id: 'doc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title, url, description, tags, locationId, createdAt: new Date().toISOString() });
+            saveDataToFirebase();
+            addVaultForm.reset();
+            refreshLocationSelectors();
+            renderVault();
+            showToast('Document link added.');
+        });
+        vaultListEl.addEventListener('click', (e) => {
+            const del = e.target.closest('.vault-delete');
+            if (del) {
+                const id = del.dataset.id;
+                if (confirm('Delete this document link? (The file itself is not touched.)')) {
+                    vaultData = vaultData.filter(v => v.id !== id);
+                    saveDataToFirebase();
+                    renderVault();
+                    showToast('Link deleted.');
+                }
+            }
+        });
+        document.getElementById('vault-location-filter').addEventListener('change', (e) => { vaultLocationFilter = e.target.value; renderVault(); });
+        vaultTagChipsEl.addEventListener('click', (e) => {
+            const chip = e.target.closest('.tag-chip');
+            if (!chip) return;
+            vaultTagFilter = chip.dataset.tag || '';
+            renderVault();
+        });
+
+        // ---- Global search: input, tag chips, jump to record's tab ----
+        globalSearchEl.addEventListener('input', () => { searchQuery = globalSearchEl.value; renderSearch(); });
+        searchTagsEl.addEventListener('click', (e) => {
+            const chip = e.target.closest('.tag-chip');
+            if (!chip) return;
+            const t = chip.dataset.tag || '';
+            searchTagFilter = (searchTagFilter.toLowerCase() === t.toLowerCase()) ? '' : t; // toggle
+            renderSearch();
+        });
+        searchResultsEl.addEventListener('click', (e) => {
+            const row = e.target.closest('.search-result');
+            if (!row) return;
+            switchTab(row.dataset.tab);
+        });
+
         addApprovalForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const title = document.getElementById('new-approval-title').value.trim();
@@ -2949,6 +3273,7 @@
                 responsible: document.getElementById('new-responsible').value,
                 accountable: document.getElementById('new-accountable').value,
                 locationId: (document.getElementById('new-gap-location') || {}).value || '',
+                tags: parseTags(document.getElementById('new-gap-tags').value),
                 status: 'Not Started',
                 comments: [],
                 notes: ''
@@ -3008,6 +3333,7 @@
             const awb = document.getElementById('new-reminder-awb').value.trim();
             const recurPeriod = document.getElementById('new-reminder-recur').value;
             const locationId = (document.getElementById('new-reminder-location') || {}).value || '';
+            const tags = parseTags((document.getElementById('new-reminder-tags') || {}).value || '');
             if (category === 'shipment' && !awb) {
                 showToast('Shipment reminders require an AWB number.', true);
                 document.getElementById('new-reminder-awb').focus();
@@ -3017,7 +3343,7 @@
             if (category === 'recurring' && !deadline) deadline = todayStr();
             if (reminderText) {
                 const newId = remindersData.length > 0 ? Math.max(...remindersData.map(r => r.id)) + 1 : 1;
-                const newReminder = { id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [], createdAt: new Date().toISOString(), deadline: deadline || '', awb: category === 'shipment' ? awb : '', recurPeriod: category === 'recurring' ? recurPeriod : '', locationId: locationId };
+                const newReminder = { id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [], createdAt: new Date().toISOString(), deadline: deadline || '', awb: category === 'shipment' ? awb : '', recurPeriod: category === 'recurring' ? recurPeriod : '', locationId: locationId, tags: tags };
                 remindersData.push(newReminder);
                 logActivity('created', newReminder);
                 saveDataToFirebase();
@@ -3063,6 +3389,8 @@
                 if (editingReminderIds.has(id)) {
                     const card = editToggle.closest('li');
                     card.querySelectorAll('.rem-edit-field').forEach(inp => { reminder[inp.dataset.field] = inp.value; });
+                    const tagsInput = card.querySelector('.rem-edit-tags');
+                    if (tagsInput) reminder.tags = parseTags(tagsInput.value);
                     if (reminder.category !== 'shipment') reminder.awb = '';
                     if (reminder.category !== 'recurring') reminder.recurPeriod = '';
                     editingReminderIds.delete(id);
