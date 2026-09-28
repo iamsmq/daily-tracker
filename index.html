@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Operation Panel</title>
     <link rel="icon" type="image/png" href="ops-logo.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#111111">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Operation Panel">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -742,7 +748,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getFirestore, doc, collection, onSnapshot, setDoc, getDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -869,9 +875,41 @@
         const officialClaimsSection = document.getElementById('official-claims-section');
         const personalExpenseSection = document.getElementById('personal-expense-section');
 
-        // Each signed-in user reads/writes only their own document at trackerData/{uid}.
-        let docRef = null;
-        const sharedRef = doc(db, "trackerData", "shared"); // old single-doc location, read once to migrate
+        // Storage model: each dataset is its own document under trackerData/{uid}/collections/{name}.
+        // This removes the single-document size ceiling and means a write can only ever touch one dataset,
+        // never wipe everything. docRef points at the legacy single doc (used only to migrate old data).
+        let docRef = null;   // legacy single doc trackerData/{uid}
+        let colRef = null;   // subcollection trackerData/{uid}/collections
+        const sharedRef = doc(db, "trackerData", "shared"); // legacy shared doc (migration source)
+
+        // Registry of datasets and how each is stored.
+        const DATASETS = {
+            gaps:          'array',
+            reminders:     'array',
+            claims:        'array',
+            expenses:      'array',
+            contacts:      'array',
+            templates:     'array',
+            activityLog:   'array',
+            schedule:      'map',
+            scheduleStatus:'map'
+        };
+        const getDataset = (n) => ({ gaps: gapsData, reminders: remindersData, claims: claimsData, expenses: expensesData, contacts: contactsData, templates: templatesData, activityLog: activityLog, schedule: scheduleData, scheduleStatus: scheduleStatus }[n]);
+        const setDataset = (n, v) => {
+            switch (n) {
+                case 'gaps': gapsData = v; break;
+                case 'reminders': remindersData = v; break;
+                case 'claims': claimsData = v; break;
+                case 'expenses': expensesData = v; break;
+                case 'contacts': contactsData = v; break;
+                case 'templates': templatesData = v; break;
+                case 'activityLog': activityLog = v; break;
+                case 'schedule': scheduleData = v; break;
+                case 'scheduleStatus': scheduleStatus = v; break;
+            }
+        };
+        const wrap = (n) => DATASETS[n] === 'array' ? { items: getDataset(n) || [] } : { map: getDataset(n) || {} };
+        let lastSaved = {}; // name -> last serialized payload, so we only write datasets that changed
 
         const showToast = (message, isError = false) => {
             const toast = document.createElement('div');
@@ -905,14 +943,23 @@
         };
 
         const saveDataToFirebase = async () => {
-            if (!docRef) return;
-            // Refuse to write an all-empty document unless this is a real new-account init.
-            // Stops a stray "document missing" read (e.g. from cache) from wiping loaded data.
+            if (!colRef) return;
+            // Refuse to write an all-empty state unless this is a real new-account init.
             if (isAllDataEmpty() && !dataEverLoaded && !allowEmptyInit) return;
-            const payload = buildPayload();
-            mirrorToLocal(payload);
+            mirrorToLocal(buildPayload());
             try {
-                await setDoc(docRef, payload);
+                const batch = writeBatch(db);
+                let changed = 0;
+                for (const name of Object.keys(DATASETS)) {
+                    const payload = wrap(name);
+                    const ser = JSON.stringify(payload);
+                    if (lastSaved[name] !== ser) {
+                        batch.set(doc(colRef, name), payload);
+                        lastSaved[name] = ser;
+                        changed++;
+                    }
+                }
+                if (changed) await batch.commit();
             } catch (error) {
                 console.error("Error saving data to Firebase:", error);
                 showToast("Network/permission error with Firestore.", true);
@@ -938,7 +985,8 @@
                 activityLog = d.activityLog || [];
                 remindersData.forEach(r => { if (!r.remarks) r.remarks = []; });
                 dataEverLoaded = true;
-                if (docRef) await setDoc(docRef, buildPayload());
+                lastSaved = {}; // force all datasets to write
+                await saveDataToFirebase();
                 refreshUI();
                 showToast(`Restored local backup from ${b.savedAt || 'unknown time'}.`);
                 console.log('Restored backup saved at', b.savedAt);
@@ -954,11 +1002,15 @@
                 currentUserName = user.displayName || (user.email || '').split('@')[0] || '';
                 uidValueEl.textContent = user.uid;
                 docRef = doc(db, "trackerData", user.uid);
+                colRef = collection(db, "trackerData", user.uid, "collections");
+                lastSaved = {};
+                dataEverLoaded = false;
                 startDataSync();
             } else {
                 appContainer.classList.add('hidden');
                 loginScreen.classList.remove('hidden');
                 docRef = null;
+                colRef = null;
                 if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
             }
         });
@@ -1007,26 +1059,29 @@
         // ---------- DATA SYNC ----------
         const startDataSync = () => {
             if (unsubscribeSnapshot) return;
-            // includeMetadataChanges lets us tell a cache read from a server read.
-            unsubscribeSnapshot = onSnapshot(docRef, { includeMetadataChanges: true }, (docSnapshot) => {
-                if (docSnapshot.exists()) {
-                    const data = docSnapshot.data();
-                    gapsData = data.gaps || [];
-                    remindersData = data.reminders || [];
-                    scheduleData = migrateSchedule(data.schedule || {});
-                    scheduleStatus = data.scheduleStatus || { date: '', done: {} };
-                    templatesData = data.templates || [];
-                    claimsData = data.claims || [];
-                    expensesData = data.expenses || [];
-                    contactsData = data.contacts || [];
-                    activityLog = data.activityLog || [];
+            // Listen to the whole datasets subcollection. includeMetadataChanges lets us tell a
+            // cache read from a server read, so a cache-only "empty" never triggers a blank init.
+            unsubscribeSnapshot = onSnapshot(colRef, { includeMetadataChanges: true }, (snap) => {
+                if (!snap.empty) {
+                    const byId = {};
+                    snap.forEach(dd => { byId[dd.id] = dd.data(); });
+                    for (const name of Object.keys(DATASETS)) {
+                        const d = byId[name];
+                        if (DATASETS[name] === 'array') {
+                            setDataset(name, (d && Array.isArray(d.items)) ? d.items : []);
+                        } else {
+                            const m = (d && d.map && typeof d.map === 'object') ? d.map : {};
+                            setDataset(name, name === 'scheduleStatus' ? (Object.keys(m).length ? m : { date: '', done: {} }) : m);
+                        }
+                        lastSaved[name] = JSON.stringify(wrap(name)); // keep in sync so we don't rewrite unchanged data
+                    }
+                    scheduleData = migrateSchedule(scheduleData || {});
+                    lastSaved['schedule'] = JSON.stringify(wrap('schedule'));
                     remindersData.forEach(r => { if (!r.remarks) r.remarks = []; });
                     dataEverLoaded = true;
                     refreshUI();
-                } else if (!docSnapshot.metadata.fromCache) {
-                    // ONLY act on a server-confirmed "missing". A cache-only "missing"
-                    // (common right after login) is ignored — we wait for the server,
-                    // so we never wipe a real document that the cache hasn't seen yet.
+                } else if (!snap.metadata.fromCache) {
+                    // Server-confirmed: no datasets yet. Migrate old data if any, else start blank.
                     migrateOrInit();
                 }
             }, (error) => {
@@ -1035,45 +1090,48 @@
             });
         };
 
+        // Write each dataset doc from a legacy single-doc source object (upgrade path).
+        const writeDatasetsFrom = async (src) => {
+            const batch = writeBatch(db);
+            for (const name of Object.keys(DATASETS)) {
+                let val = src ? src[name] : undefined;
+                if (DATASETS[name] === 'array') val = Array.isArray(val) ? val : [];
+                else val = (val && typeof val === 'object') ? val : (name === 'scheduleStatus' ? { date: '', done: {} } : {});
+                batch.set(doc(colRef, name), DATASETS[name] === 'array' ? { items: val } : { map: val });
+            }
+            await batch.commit();
+        };
+
         const migrateOrInit = async () => {
-            if (!docRef) return;
+            if (!colRef || !docRef) return;
             try {
-                // Re-verify against the server that the doc truly doesn't exist before writing anything.
-                const selfSnap = await getDoc(docRef);
-                if (selfSnap.exists()) return; // real doc present — the listener will load it; never overwrite
-                const sharedSnap = await getDoc(sharedRef);
-                if (sharedSnap.exists()) {
-                    const d = sharedSnap.data();
-                    await setDoc(docRef, {
-                        gaps: d.gaps || [],
-                        reminders: d.reminders || [],
-                        schedule: d.schedule || {},
-                        scheduleStatus: d.scheduleStatus || { date: '', done: {} },
-                        templates: d.templates || [],
-                        claims: d.claims || [],
-                        expenses: d.expenses || [],
-                        contacts: d.contacts || [],
-                        activityLog: d.activityLog || []
-                    });
-                    showToast('Your existing data was moved to your account.');
-                    return; // snapshot fires again with the copied data
+                // If datasets already exist, do nothing (the listener loads them).
+                const existing = await getDocs(colRef);
+                if (!existing.empty) return;
+                // Upgrade path: pull data from the legacy single doc (your own), else the legacy shared doc.
+                let src = null;
+                const oldSnap = await getDoc(docRef);
+                if (oldSnap.exists()) {
+                    const dd = oldSnap.data();
+                    if (dd && Object.keys(dd).length) src = dd;
+                }
+                if (!src) {
+                    try { const sh = await getDoc(sharedRef); if (sh.exists()) src = sh.data(); } catch (e) { /* shared not readable — normal */ }
+                }
+                if (src) {
+                    await writeDatasetsFrom(src);
+                    showToast('Your data was upgraded to the new secure format.');
+                    return; // listener fires with the migrated datasets
                 }
             } catch (e) {
-                // A read failed (transient network / permission). Do NOT write a blank doc — bail safely.
+                // A read failed (transient/permission). Do NOT write blank — bail safely.
                 console.error('Init check failed; not writing blank:', e);
                 return;
             }
-            // Confirmed brand-new account: create an empty document, explicitly allowed this once.
-            gapsData = [];
-            remindersData = [];
-            scheduleData = {};
-            scheduleStatus = { date: '', done: {} };
-            templatesData = [];
-            claimsData = [];
-            expensesData = [];
-            contactsData = [];
-            activityLog = [];
+            // Confirmed brand-new account: create empty dataset docs, allowed this once.
+            for (const name of Object.keys(DATASETS)) setDataset(name, DATASETS[name] === 'array' ? [] : (name === 'scheduleStatus' ? { date: '', done: {} } : {}));
             allowEmptyInit = true;
+            lastSaved = {};
             await saveDataToFirebase();
             allowEmptyInit = false;
         };
@@ -2618,6 +2676,14 @@
         switchTab('today');
         switchGapsView('active');
         switchReminderTab('pending');
+    </script>
+    <script>
+        // PWA: register the service worker (installable + caches the app shell and CDN assets).
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
     </script>
 </body>
 </html>
