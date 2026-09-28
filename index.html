@@ -318,6 +318,7 @@
                 <button id="tab-schedule" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Schedule</button>
                 <button id="tab-templates" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Templates</button>
                 <button id="tab-directory" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Directory</button>
+                <button id="tab-locations" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Locations</button>
                 <button id="tab-claims" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Claims</button>
                 <button id="tab-reports" class="tab-btn text-left whitespace-nowrap md:w-full py-2.5 px-4 font-medium text-sm focus:outline-none">Reports</button>
             </nav>
@@ -347,7 +348,7 @@
                             <textarea id="new-action" rows="1" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="e.g., Restructure routes..." required></textarea>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
                             <label for="new-responsible" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Responsible</label>
                             <input type="text" id="new-responsible" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="Who does the work">
@@ -355,6 +356,10 @@
                         <div>
                             <label for="new-accountable" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Accountable</label>
                             <input type="text" id="new-accountable" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="Who owns the outcome">
+                        </div>
+                        <div>
+                            <label for="new-gap-location" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Location</label>
+                            <select id="new-gap-location" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm"></select>
                         </div>
                     </div>
                     <div class="flex justify-end">
@@ -369,11 +374,14 @@
             </div>
 
             <!-- Gaps sub-tabs: Active vs Completed -->
-            <div class="border-b border-gray-200 mb-4">
+            <div class="border-b border-gray-200 mb-4 flex items-end justify-between flex-wrap gap-2">
                 <nav class="-mb-px flex space-x-8" aria-label="Gap tabs">
                     <button id="gap-sub-tab-active" class="sub-tab-btn active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Active</button>
                     <button id="gap-sub-tab-completed" class="sub-tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Completed</button>
                 </nav>
+                <div class="pb-2">
+                    <select id="gaps-location-filter" class="rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-xs py-1"></select>
+                </div>
             </div>
 
             <div class="bg-white shadow-md rounded-lg overflow-x-auto">
@@ -446,6 +454,10 @@
                                 <option value="monthly">Month</option>
                             </select>
                         </div>
+                        <div>
+                            <label for="new-reminder-location" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Location</label>
+                            <select id="new-reminder-location" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm"></select>
+                        </div>
                     </div>
                     <div class="flex justify-end">
                         <button type="submit" class="inline-flex justify-center py-2 px-5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#111111] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#374151]">Add reminder</button>
@@ -466,6 +478,9 @@
                         <button class="filter-btn px-3 py-1 text-sm font-medium rounded-md shadow-sm border border-gray-300" data-filter="Medium">Medium</button>
                         <button class="filter-btn px-3 py-1 text-sm font-medium rounded-md shadow-sm border border-gray-300" data-filter="Low">Low</button>
                     </div>
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <select id="reminders-location-filter" class="rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-xs py-1"></select>
                 </div>
                 <div id="pending-reminders-content" class="mt-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
@@ -567,6 +582,48 @@
             <div id="directory-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start"></div>
         </div>
 
+        <!-- Locations Content -->
+        <div id="locations-content" class="hidden">
+            <div class="flex items-baseline justify-between flex-wrap gap-2 mb-1">
+                <h2 class="text-xl font-semibold text-[#111111]">Location Board</h2>
+                <span class="text-sm text-gray-500">Live rollup per site. Click a card to open its gaps.</span>
+            </div>
+            <div id="location-board" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 mb-8"></div>
+
+            <div class="bg-white p-6 shadow-md rounded-lg mb-6">
+                <div class="flex items-baseline justify-between flex-wrap gap-2 mb-4">
+                    <h3 class="text-lg font-semibold text-[#111111]">Manage locations</h3>
+                    <button id="seed-sr-btn" class="text-xs font-medium px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300">Load Southern Region set</button>
+                </div>
+                <form id="add-location-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                    <div>
+                        <label for="new-loc-name" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Name</label>
+                        <input type="text" id="new-loc-name" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="e.g., Khamis Mushayt Station" required>
+                    </div>
+                    <div>
+                        <label for="new-loc-code" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Code</label>
+                        <input type="text" id="new-loc-code" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="e.g., KMT">
+                    </div>
+                    <div>
+                        <label for="new-loc-type" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Type</label>
+                        <input type="text" id="new-loc-type" list="loc-type-options" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="station">
+                        <datalist id="loc-type-options">
+                            <option value="station"></option><option value="hub"></option><option value="office"></option><option value="warehouse"></option>
+                        </datalist>
+                    </div>
+                    <div>
+                        <label for="new-loc-group" class="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Group</label>
+                        <input type="text" id="new-loc-group" list="loc-group-options" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="e.g., Southern Region">
+                        <datalist id="loc-group-options"></datalist>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="w-full md:w-auto inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#111111] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#374151]">Add location</button>
+                    </div>
+                </form>
+            </div>
+            <div id="locations-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start"></div>
+        </div>
+
         <!-- Claims Approval Content -->
         <div id="claims-content" class="hidden">
             <!-- Claims sub-tabs -->
@@ -586,8 +643,8 @@
                         <input type="date" id="new-claim-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm" required>
                     </div>
                     <div>
-                        <label for="new-claim-location" class="block text-sm font-medium text-gray-700">Location</label>
-                        <input type="text" id="new-claim-location" list="claim-location-options" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm" placeholder="e.g., Khamis Mushait" required>
+                        <label for="new-claim-location" class="block text-sm font-medium text-gray-700">Place / vendor</label>
+                        <input type="text" id="new-claim-location" list="claim-location-options" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm" placeholder="e.g., Fuel station, garage" required>
                         <datalist id="claim-location-options"></datalist>
                     </div>
                     <div>
@@ -598,6 +655,10 @@
                         <label for="new-claim-amount" class="block text-sm font-medium text-gray-700">Amount</label>
                         <input type="number" step="0.01" min="0" id="new-claim-amount" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm" placeholder="0.00" required>
                     </div>
+                    <div>
+                        <label for="new-claim-site" class="block text-sm font-medium text-gray-700">Location</label>
+                        <select id="new-claim-site" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] sm:text-sm"></select>
+                    </div>
                     <div class="md:col-span-2 lg:col-span-4 flex justify-end">
                         <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#111111] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#374151]">Add Claim</button>
                     </div>
@@ -606,16 +667,20 @@
 
             <!-- Filters -->
             <div class="bg-white p-4 shadow-md rounded-lg mb-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
                     <div class="lg:col-span-2">
-                        <label for="claim-search" class="block text-xs font-medium text-gray-600 mb-1">Search (expense or location)</label>
+                        <label for="claim-search" class="block text-xs font-medium text-gray-600 mb-1">Search (expense or place)</label>
                         <input type="text" id="claim-search" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm" placeholder="Type to filter...">
                     </div>
                     <div>
-                        <label for="claim-location-filter" class="block text-xs font-medium text-gray-600 mb-1">Location</label>
+                        <label for="claim-location-filter" class="block text-xs font-medium text-gray-600 mb-1">Place</label>
                         <select id="claim-location-filter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm">
-                            <option value="All">All locations</option>
+                            <option value="All">All places</option>
                         </select>
+                    </div>
+                    <div>
+                        <label for="claim-site-filter" class="block text-xs font-medium text-gray-600 mb-1">Location</label>
+                        <select id="claim-site-filter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#374151] focus:ring-[#374151] text-sm"></select>
                     </div>
                     <div>
                         <label for="claim-date-from" class="block text-xs font-medium text-gray-600 mb-1">From date</label>
@@ -637,6 +702,7 @@
                     <thead>
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#111111] uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#111111] uppercase tracking-wider">Place</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#111111] uppercase tracking-wider">Location</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#111111] uppercase tracking-wider">Expense for</th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-[#111111] uppercase tracking-wider">Amount</th>
@@ -646,7 +712,7 @@
                     <tbody id="claims-table-body" class="bg-white divide-y divide-gray-200"></tbody>
                     <tfoot>
                         <tr class="bg-gray-50 font-semibold text-[#111111]">
-                            <td class="px-6 py-3 text-sm" colspan="3">Total (<span id="claims-count">0</span> shown)</td>
+                            <td class="px-6 py-3 text-sm" colspan="4">Total (<span id="claims-count">0</span> shown)</td>
                             <td class="px-6 py-3 text-sm text-right" id="claims-total">0.00</td>
                             <td></td>
                         </tr>
@@ -783,6 +849,9 @@
 
         let gapsData = [];
         let remindersData = [];
+        let locationsData = []; // [{ id, name, code, type, group, active, order }] — user-configurable sites
+        let gapsLocationFilter = 'All';     // '' = unassigned, 'All' = every location, else a location id
+        let reminderLocationFilter = 'All';
         let scheduleData = {}; // { "08:00": "plan text", ... } — one fixed recurring schedule
         let scheduleStatus = { date: '', done: {} }; // per-day completion ticks; resets when the date changes
         let templatesData = []; // [{ id, title, body }]
@@ -794,7 +863,7 @@
         let editingContactIds = new Set();
         let editingReminderIds = new Set();
         let renderedContactSig = '';
-        let claimFilters = { search: '', location: 'All', from: '', to: '' };
+        let claimFilters = { search: '', location: 'All', site: 'All', from: '', to: '' };
         let activityLog = []; // [{ type: 'created'|'completed'|'escalated', priority, day: 'YYYY-MM-DD', ts }]
         let currentUserName = '';
         let weatherHtml = '';
@@ -886,6 +955,12 @@
         const expenseClearFiltersBtn = document.getElementById('expense-clear-filters');
         const expenseDownloadBtn = document.getElementById('expense-download-btn');
         const claimDownloadBtn = document.getElementById('claim-download-btn');
+        const tabLocations = document.getElementById('tab-locations');
+        const locationsContent = document.getElementById('locations-content');
+        const locationBoard = document.getElementById('location-board');
+        const locationsList = document.getElementById('locations-list');
+        const addLocationForm = document.getElementById('add-location-form');
+        const seedSrBtn = document.getElementById('seed-sr-btn');
         const claimSubTabOfficial = document.getElementById('claim-sub-tab-official');
         const claimSubTabPersonal = document.getElementById('claim-sub-tab-personal');
         const officialClaimsSection = document.getElementById('official-claims-section');
@@ -902,6 +977,7 @@
         const DATASETS = {
             gaps:          'array',
             reminders:     'array',
+            locations:     'array',
             claims:        'array',
             expenses:      'array',
             contacts:      'array',
@@ -910,11 +986,12 @@
             schedule:      'map',
             scheduleStatus:'map'
         };
-        const getDataset = (n) => ({ gaps: gapsData, reminders: remindersData, claims: claimsData, expenses: expensesData, contacts: contactsData, templates: templatesData, activityLog: activityLog, schedule: scheduleData, scheduleStatus: scheduleStatus }[n]);
+        const getDataset = (n) => ({ gaps: gapsData, reminders: remindersData, locations: locationsData, claims: claimsData, expenses: expensesData, contacts: contactsData, templates: templatesData, activityLog: activityLog, schedule: scheduleData, scheduleStatus: scheduleStatus }[n]);
         const setDataset = (n, v) => {
             switch (n) {
                 case 'gaps': gapsData = v; break;
                 case 'reminders': remindersData = v; break;
+                case 'locations': locationsData = v; break;
                 case 'claims': claimsData = v; break;
                 case 'expenses': expensesData = v; break;
                 case 'contacts': contactsData = v; break;
@@ -945,9 +1022,10 @@
         const isAllDataEmpty = () =>
             gapsData.length === 0 && remindersData.length === 0 && templatesData.length === 0 &&
             claimsData.length === 0 && expensesData.length === 0 && contactsData.length === 0 &&
+            locationsData.length === 0 &&
             activityLog.length === 0 && Object.keys(scheduleData || {}).length === 0;
 
-        const buildPayload = () => ({ gaps: gapsData, reminders: remindersData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData, claims: claimsData, expenses: expensesData, contacts: contactsData, activityLog: activityLog });
+        const buildPayload = () => ({ gaps: gapsData, reminders: remindersData, locations: locationsData, schedule: scheduleData, scheduleStatus: scheduleStatus, templates: templatesData, claims: claimsData, expenses: expensesData, contacts: contactsData, activityLog: activityLog });
 
         // Local safety mirror: keep the last non-empty dataset in this browser, keyed per account.
         const backupKey = () => 'opPanelBackup_' + (docRef ? docRef.id : 'anon');
@@ -1161,6 +1239,135 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+
+        // ---- Locations helpers ----
+        const activeLocations = () => locationsData
+            .filter(l => l && l.active !== false)
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.name || '').localeCompare(String(b.name || '')));
+        const locationById = (id) => locationsData.find(l => l && l.id === id) || null;
+        // Short label for a location id: "CODE" if set, else name; '' when none/unknown.
+        const locationLabel = (id) => {
+            if (!id) return '';
+            const l = locationById(id);
+            if (!l) return '';
+            return l.code ? l.code : (l.name || '');
+        };
+        const locationFullName = (id) => { const l = locationById(id); return l ? (l.name || l.code || '') : ''; };
+        // Inline pill for a record's location; '' when unassigned.
+        const locationBadge = (id) => {
+            const lbl = locationLabel(id);
+            if (!lbl) return '';
+            return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700" title="${esc(locationFullName(id))}">📍 ${esc(lbl)}</span>`;
+        };
+        // Populate a <select> with location options. opts: { all:bool, none:bool, noneLabel }
+        const fillLocationSelect = (sel, selectedId, opts = {}) => {
+            if (!sel) return;
+            const parts = [];
+            if (opts.all) parts.push(`<option value="All">All locations</option>`);
+            if (opts.none) parts.push(`<option value="">${opts.noneLabel || 'No location'}</option>`);
+            activeLocations().forEach(l => {
+                const label = l.code ? `${l.code} — ${l.name || ''}` : (l.name || '(unnamed)');
+                parts.push(`<option value="${esc(l.id)}">${esc(label)}</option>`);
+            });
+            const val = selectedId == null ? (opts.all ? 'All' : '') : selectedId;
+            sel.innerHTML = parts.join('');
+            sel.value = val;
+            if (sel.value !== String(val)) sel.value = opts.all ? 'All' : '';
+        };
+        // Keep every location-bound select in sync with the current locations list.
+        const refreshLocationSelectors = () => {
+            const g = document.getElementById('new-gap-location');
+            const r = document.getElementById('new-reminder-location');
+            const c = document.getElementById('new-claim-site');
+            if (g) fillLocationSelect(g, g.value || '', { none: true, noneLabel: 'No location' });
+            if (r) fillLocationSelect(r, r.value || '', { none: true, noneLabel: 'No location' });
+            if (c) fillLocationSelect(c, c.value || '', { none: true, noneLabel: 'No location' });
+            const gf = document.getElementById('gaps-location-filter');
+            const rf = document.getElementById('reminders-location-filter');
+            const sf = document.getElementById('claim-site-filter');
+            if (gf) { fillLocationSelect(gf, gapsLocationFilter, { all: true, none: true, noneLabel: 'Unassigned' }); gf.value = gapsLocationFilter; }
+            if (rf) { fillLocationSelect(rf, reminderLocationFilter, { all: true, none: true, noneLabel: 'Unassigned' }); rf.value = reminderLocationFilter; }
+            if (sf) { fillLocationSelect(sf, claimFilters.site, { all: true, none: true, noneLabel: 'Unassigned' }); sf.value = claimFilters.site; }
+        };
+        // True if a record with locationId passes a location filter value ('All' | '' unassigned | id).
+        const passesLocFilter = (recLocId, filterVal) => {
+            if (filterVal === 'All') return true;
+            if (filterVal === '') return !recLocId;
+            return recLocId === filterVal;
+        };
+
+        const renderLocations = () => {
+            // Group datalist for the add form
+            const groupDl = document.getElementById('loc-group-options');
+            if (groupDl) {
+                const groups = [...new Set(locationsData.map(l => l.group).filter(Boolean))].sort();
+                groupDl.innerHTML = groups.map(g => `<option value="${esc(g)}"></option>`).join('');
+            }
+            // Board: one card per active location, plus an Unassigned card if untagged records exist
+            const monthPrefix = todayStr().slice(0, 7); // YYYY-MM
+            const rollup = (locId) => {
+                const og = gapsData.filter(g => g.status !== 'Implemented' && (locId === null ? !g.locationId : g.locationId === locId)).length;
+                const pend = remindersData.filter(r => r.status === 'pending' && (locId === null ? !r.locationId : r.locationId === locId));
+                const overdue = pend.filter(r => r.deadline && isOverdue(r.deadline)).length;
+                const claimsMtd = claimsData
+                    .filter(c => (locId === null ? !c.locationId : c.locationId === locId) && (c.date || '').slice(0, 7) === monthPrefix)
+                    .reduce((s, c) => s + (Number(c.amount) || 0), 0);
+                return { og, pend: pend.length, overdue, claimsMtd };
+            };
+            const card = (loc, isUnassigned) => {
+                const id = isUnassigned ? null : loc.id;
+                const r = rollup(id);
+                const title = isUnassigned ? 'Unassigned' : (loc.name || '(unnamed)');
+                const sub = isUnassigned ? 'Records with no location' : [loc.code, loc.type, loc.group].filter(Boolean).join(' · ');
+                const filterVal = isUnassigned ? '' : loc.id;
+                return `
+                <div class="bg-white p-4 rounded-lg shadow ${isUnassigned ? 'border border-dashed border-gray-300' : ''} cursor-pointer hover:shadow-md transition-shadow" data-loc-card="${esc(filterVal)}">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <p class="text-base font-semibold text-[#111111]">${esc(title)}</p>
+                            ${sub ? `<p class="text-xs text-gray-500 mt-0.5">${esc(sub)}</p>` : ''}
+                        </div>
+                        ${r.overdue ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">${r.overdue} overdue</span>` : ''}
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+                        <div><p class="text-2xl font-bold text-[#111111] leading-none">${r.og}</p><p class="text-[11px] text-gray-500 mt-1">Open gaps</p></div>
+                        <div><p class="text-2xl font-bold text-[#111111] leading-none">${r.pend}</p><p class="text-[11px] text-gray-500 mt-1">Pending</p></div>
+                        <div><p class="text-lg font-bold text-[#111111] leading-none mt-1">${fmtAmount(r.claimsMtd)}</p><p class="text-[11px] text-gray-500 mt-1">Claims MTD</p></div>
+                    </div>
+                </div>`;
+            };
+            const locs = activeLocations();
+            const hasUnassigned = gapsData.some(g => g.status !== 'Implemented' && !g.locationId)
+                || remindersData.some(r => r.status === 'pending' && !r.locationId);
+            let boardHtml = locs.map(l => card(l, false)).join('');
+            if (hasUnassigned) boardHtml += card(null, true);
+            locationBoard.innerHTML = boardHtml || `<p class="col-span-full text-gray-500 p-4 bg-white rounded-md shadow-sm">No locations yet. Add one below, or load the Southern Region set.</p>`;
+
+            // Manage list: every location (incl. archived), with edit/archive/delete
+            if (locationsData.length === 0) {
+                locationsList.innerHTML = `<p class="col-span-full text-gray-500 p-4 bg-white rounded-md shadow-sm">No locations configured.</p>`;
+            } else {
+                const sorted = locationsData.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.name||'').localeCompare(String(b.name||'')));
+                locationsList.innerHTML = sorted.map(l => {
+                    const archived = l.active === false;
+                    return `
+                    <div class="bg-white p-4 rounded-md shadow-sm ${archived ? 'opacity-60' : ''}" data-id="${esc(l.id)}">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <p class="text-sm font-semibold text-[#111111]">${esc(l.name || '(unnamed)')} ${l.code ? `<span class="text-xs font-medium text-gray-500">(${esc(l.code)})</span>` : ''}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">${esc([l.type, l.group].filter(Boolean).join(' · ')) || '—'}</p>
+                            </div>
+                            ${archived ? `<span class="text-[10px] uppercase tracking-wide text-gray-400">Archived</span>` : ''}
+                        </div>
+                        <div class="flex gap-2 mt-3">
+                            <button class="loc-archive text-xs font-medium px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200" data-id="${esc(l.id)}">${archived ? 'Restore' : 'Archive'}</button>
+                            <button class="loc-delete text-xs font-medium px-2.5 py-1 rounded-md bg-red-100 text-red-700 hover:bg-red-200" data-id="${esc(l.id)}">Delete</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+        };
+
         const renderGapsDashboard = () => {
             const total = gapsData.length;
             const notStarted = gapsData.filter(item => item.status === 'Not Started').length;
@@ -1305,7 +1512,8 @@
         const renderGapsTable = () => {
             tableBody.innerHTML = '';
             const rows = gapsData.filter(item =>
-                gapsView === 'completed' ? item.status === 'Implemented' : item.status !== 'Implemented'
+                (gapsView === 'completed' ? item.status === 'Implemented' : item.status !== 'Implemented')
+                && passesLocFilter(item.locationId, gapsLocationFilter)
             );
             if (rows.length === 0) {
                 const msg = gapsView === 'completed' ? 'No completed gaps yet.' : 'No active gaps. Add one above.';
@@ -1335,7 +1543,10 @@
                 row.innerHTML = `
                     <td class="px-2 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${item.id}</td>
                     <td class="px-2 py-2 whitespace-nowrap text-xs text-gray-500">${item.date || 'N/A'}</td>
-                    <td class="px-2 py-2 text-sm text-gray-700 align-top" contenteditable="true" data-field="gap" data-id="${item.id}">${esc(item.gap)}</td>
+                    <td class="px-2 py-2 text-sm text-gray-700 align-top">
+                        <div contenteditable="true" data-field="gap" data-id="${item.id}" class="focus:outline-none rounded px-1 -mx-1">${esc(item.gap)}</div>
+                        ${item.locationId ? `<div class="mt-1">${locationBadge(item.locationId)}</div>` : ''}
+                    </td>
                     <td class="px-2 py-2 text-sm text-gray-700 align-top">
                         <div class="text-gray-700 focus:outline-none rounded px-1 -mx-1" contenteditable="true" data-field="action" data-id="${item.id}">${formattedAction}</div>
                         <div class="mt-2 pt-2 border-t border-gray-100">
@@ -1362,8 +1573,9 @@
         };
 
         const renderReminders = () => {
-            const pendingReminders = remindersData.filter(r => r.status === 'pending');
-            const completedReminders = remindersData.filter(r => r.status === 'completed');
+            const locOk = (r) => passesLocFilter(r.locationId, reminderLocationFilter);
+            const pendingReminders = remindersData.filter(r => r.status === 'pending' && locOk(r));
+            const completedReminders = remindersData.filter(r => r.status === 'completed' && locOk(r));
             // Recurring reminders sit in their own slot, sorted by next due date. Priority columns exclude them.
             const nonRecurring = pendingReminders.filter(r => r.category !== 'recurring');
             const pendingRecurring = pendingReminders.filter(r => r.category === 'recurring')
@@ -1459,6 +1671,10 @@
                             </div>
                             <input type="datetime-local" class="rem-edit-field block w-full rounded-md border-gray-300 shadow-sm text-sm" data-field="deadline" value="${dlVal}">
                             <input type="text" class="rem-edit-field block w-full rounded-md border-gray-300 shadow-sm text-sm" data-field="awb" value="${esc(reminder.awb)}" placeholder="AWB (shipment only)">
+                            <select class="rem-edit-field block w-full rounded-md border-gray-300 shadow-sm text-sm" data-field="locationId">
+                                <option value="">No location</option>
+                                ${activeLocations().map(l => `<option value="${esc(l.id)}" ${reminder.locationId === l.id ? 'selected' : ''}>${esc(l.code ? `${l.code} — ${l.name || ''}` : (l.name || ''))}</option>`).join('')}
+                            </select>
                             <select class="rem-edit-field rounded-md border-gray-300 shadow-sm text-sm" data-field="recurPeriod">
                                 <option value="daily" ${reminder.recurPeriod === 'daily' ? 'selected' : ''}>Repeat: Day</option>
                                 <option value="weekly" ${(reminder.recurPeriod === 'weekly' || !reminder.recurPeriod) ? 'selected' : ''}>Repeat: Week</option>
@@ -1475,6 +1691,7 @@
                             <div class="flex flex-wrap items-center gap-1">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isCompletedList ? 'bg-gray-100 text-gray-800' : priorityBadgeClasses[reminder.priority]}">${reminder.priority}</span>
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">${reminder.category || 'general'}</span>
+                                ${locationBadge(reminder.locationId)}
                                 ${(reminder.category === 'shipment' && reminder.awb) ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">AWB ${esc(reminder.awb)}<button class="copy-awb-btn hover:text-indigo-900" data-awb="${esc(reminder.awb)}" title="Copy AWB"><svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></span>` : ''}
                                 ${deadlineHtml}
                             </div>
@@ -1691,6 +1908,7 @@
             const s = claimFilters.search.trim().toLowerCase();
             return claimsData.filter(c => {
                 if (claimFilters.location !== 'All' && c.location !== claimFilters.location) return false;
+                if (!passesLocFilter(c.locationId, claimFilters.site)) return false;
                 if (claimFilters.from && (c.date || '') < claimFilters.from) return false;
                 if (claimFilters.to && (c.date || '') > claimFilters.to) return false;
                 if (s) {
@@ -1706,7 +1924,7 @@
             const locations = [...new Set(claimsData.map(c => c.location).filter(Boolean))].sort();
             claimLocationOptions.innerHTML = locations.map(l => `<option value="${esc(l)}"></option>`).join('');
             const prev = claimFilters.location;
-            claimLocationFilter.innerHTML = '<option value="All">All locations</option>' +
+            claimLocationFilter.innerHTML = '<option value="All">All places</option>' +
                 locations.map(l => `<option value="${esc(l)}">${esc(l)}</option>`).join('');
             claimLocationFilter.value = locations.includes(prev) || prev === 'All' ? prev : 'All';
             claimFilters.location = claimLocationFilter.value;
@@ -1715,13 +1933,14 @@
             const rows = getFilteredClaims().slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
             claimsTableBody.innerHTML = '';
             if (rows.length === 0) {
-                claimsTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-sm text-gray-500 text-center">No claims match these filters. Log one above, or clear the filters.</td></tr>`;
+                claimsTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-6 text-sm text-gray-500 text-center">No claims match these filters. Log one above, or clear the filters.</td></tr>`;
             } else {
                 rows.forEach(c => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-700">${esc(c.date)}</td>
                         <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-700">${esc(c.location)}</td>
+                        <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-700">${c.locationId ? locationBadge(c.locationId) : '<span class="text-gray-300">—</span>'}</td>
                         <td class="px-6 py-3 text-sm text-gray-700">${esc(c.expenseFor)}</td>
                         <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900 text-right font-medium">${fmtAmount(c.amount)}</td>
                         <td class="px-6 py-3 whitespace-nowrap text-sm text-right">
@@ -1885,6 +2104,28 @@
             if (!weatherLoaded) { weatherLoaded = true; loadWeather(); }
             const nameBit = currentUserName ? `, ${esc(currentUserName.split(' ')[0])}` : '';
 
+            // ---- Morning brief: a plain-language digest of what needs attention today ----
+            const yStr = (() => { const d = new Date(now); d.setDate(d.getDate() - 1); const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; })();
+            const claimsYesterday = claimsData.filter(c => c.date === yStr);
+            const claimsYestSum = claimsYesterday.reduce((s, c) => s + (Number(c.amount) || 0), 0);
+            const escalatedToday = (Array.isArray(activityLog) ? activityLog : []).filter(a => a && a.type === 'escalated' && a.day === todayStr()).length;
+            const highDue = attention.filter(r => r.priority === 'High').length;
+            const briefBits = [];
+            if (overdue.length) briefBits.push(`<strong class="text-red-600">${overdue.length} overdue</strong>`);
+            if (dueToday.length) briefBits.push(`<strong>${dueToday.length} due today</strong>${highDue ? ` (${highDue} high priority)` : ''}`);
+            if (openGaps.length) briefBits.push(`${openGaps.length} open gap${openGaps.length === 1 ? '' : 's'}`);
+            if (escalatedToday) briefBits.push(`${escalatedToday} escalated today`);
+            if (claimsYesterday.length) briefBits.push(`${claimsYesterday.length} claim${claimsYesterday.length === 1 ? '' : 's'} logged yesterday (${fmtAmount(claimsYestSum)})`);
+            const joinNat = (arr) => arr.length <= 1 ? (arr[0] || '') : `${arr.slice(0, -1).join(', ')} and ${arr[arr.length - 1]}`;
+            const briefSentence = briefBits.length
+                ? `You have ${joinNat(briefBits)}.`
+                : `Nothing pressing right now. Nothing overdue, nothing due today.`;
+            const briefHtml = `
+                <div class="bg-white rounded-lg shadow p-5 mb-6 border-l-4 ${overdue.length ? 'border-red-500' : (dueToday.length ? 'border-yellow-500' : 'border-green-500')}">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Morning brief</p>
+                    <p class="text-sm text-gray-800">${briefSentence}</p>
+                </div>`;
+
             todayBody.innerHTML = `
                 <div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
                     <div>
@@ -1893,6 +2134,8 @@
                     </div>
                     ${weatherHtml ? `<div class="bg-white rounded-lg shadow px-4 py-3 text-sm text-gray-700 flex items-center gap-2">${weatherHtml}</div>` : ''}
                 </div>
+
+                ${briefHtml}
 
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <div class="bg-white rounded-lg shadow p-5 flex items-center gap-4" data-goto="reminders" role="button">
@@ -1944,6 +2187,7 @@
         };
 
         const refreshUI = () => {
+            refreshLocationSelectors();
             renderToday();
             renderGapsDashboard();
             renderGapsTable();
@@ -1954,6 +2198,7 @@
             renderSchedule();
             renderTemplates();
             renderContacts();
+            renderLocations();
             renderClaims();
             renderExpenses();
         };
@@ -1966,6 +2211,7 @@
             templatesContent.classList.add('hidden');
             claimsContent.classList.add('hidden');
             directoryContent.classList.add('hidden');
+            locationsContent.classList.add('hidden');
             reportsContent.classList.add('hidden');
             tabToday.classList.remove('active');
             tabGaps.classList.remove('active');
@@ -1974,6 +2220,7 @@
             tabTemplates.classList.remove('active');
             tabClaims.classList.remove('active');
             tabDirectory.classList.remove('active');
+            tabLocations.classList.remove('active');
             tabReports.classList.remove('active');
             if (tab === 'today') {
                 todayContent.classList.remove('hidden');
@@ -1997,6 +2244,10 @@
             } else if (tab === 'directory') {
                 directoryContent.classList.remove('hidden');
                 tabDirectory.classList.add('active');
+            } else if (tab === 'locations') {
+                locationsContent.classList.remove('hidden');
+                tabLocations.classList.add('active');
+                renderLocations();
             } else if (tab === 'reports') {
                 reportsContent.classList.remove('hidden');
                 tabReports.classList.add('active');
@@ -2037,6 +2288,7 @@
         tabSchedule.addEventListener('click', () => switchTab('schedule'));
         tabTemplates.addEventListener('click', () => switchTab('templates'));
         tabDirectory.addEventListener('click', () => switchTab('directory'));
+        tabLocations.addEventListener('click', () => switchTab('locations'));
         tabReports.addEventListener('click', () => switchTab('reports'));
         tabClaims.addEventListener('click', () => switchTab('claims'));
         gapSubTabActive.addEventListener('click', () => switchGapsView('active'));
@@ -2232,11 +2484,14 @@
             const location = document.getElementById('new-claim-location').value.trim();
             const expenseFor = document.getElementById('new-claim-expense').value.trim();
             const amount = parseFloat(document.getElementById('new-claim-amount').value);
+            const siteEl = document.getElementById('new-claim-site');
+            const locationId = siteEl ? siteEl.value : '';
             if (!date || !location || !expenseFor || isNaN(amount)) return;
             const newId = claimsData.length > 0 ? Math.max(...claimsData.map(c => c.id)) + 1 : 1;
-            claimsData.push({ id: newId, date: date, location: location, expenseFor: expenseFor, amount: amount });
+            claimsData.push({ id: newId, date: date, location: location, locationId: locationId, expenseFor: expenseFor, amount: amount });
             saveDataToFirebase();
             addClaimForm.reset();
+            refreshLocationSelectors();
             showToast('Claim logged.');
         });
 
@@ -2258,13 +2513,92 @@
         claimLocationFilter.addEventListener('change', () => { claimFilters.location = claimLocationFilter.value; renderClaims(); });
         claimDateFromEl.addEventListener('change', () => { claimFilters.from = claimDateFromEl.value; renderClaims(); });
         claimDateToEl.addEventListener('change', () => { claimFilters.to = claimDateToEl.value; renderClaims(); });
+        document.getElementById('claim-site-filter').addEventListener('change', (e) => { claimFilters.site = e.target.value; renderClaims(); });
         claimClearFiltersBtn.addEventListener('click', () => {
-            claimFilters = { search: '', location: 'All', from: '', to: '' };
+            claimFilters = { search: '', location: 'All', site: 'All', from: '', to: '' };
             claimSearchEl.value = '';
             claimDateFromEl.value = '';
             claimDateToEl.value = '';
             claimLocationFilter.value = 'All';
+            const sf = document.getElementById('claim-site-filter'); if (sf) sf.value = 'All';
             renderClaims();
+        });
+
+        // ---- Locations: filters, add, seed, manage, board ----
+        document.getElementById('gaps-location-filter').addEventListener('change', (e) => { gapsLocationFilter = e.target.value; renderGapsTable(); });
+        document.getElementById('reminders-location-filter').addEventListener('change', (e) => { reminderLocationFilter = e.target.value; renderReminders(); });
+
+        addLocationForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('new-loc-name').value.trim();
+            const code = document.getElementById('new-loc-code').value.trim();
+            const type = document.getElementById('new-loc-type').value.trim();
+            const group = document.getElementById('new-loc-group').value.trim();
+            if (!name) return;
+            const nextOrder = locationsData.length ? Math.max(...locationsData.map(l => l.order ?? 0)) + 1 : 0;
+            locationsData.push({ id: 'loc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, code, type, group, active: true, order: nextOrder });
+            saveDataToFirebase();
+            addLocationForm.reset();
+            refreshLocationSelectors();
+            renderLocations();
+            showToast('Location added.');
+        });
+
+        seedSrBtn.addEventListener('click', () => {
+            const SR = [
+                { code: 'KMT', name: 'Khamis Mushayt Station' },
+                { code: 'EAM', name: 'Najran Station' },
+                { code: 'ANS', name: 'Namas Station' },
+                { code: 'WAE', name: 'Wadi Dawasir Station' },
+                { code: 'GIZ', name: 'Jazan Station' },
+                { code: 'BSH', name: 'Bishah Station' },
+                { code: 'MYL', name: 'Muhayil Station' },
+                { code: 'HUB', name: 'Southern Region Hub', type: 'hub' }
+            ];
+            const existingCodes = new Set(locationsData.map(l => (l.code || '').toUpperCase()));
+            let added = 0, base = locationsData.length ? Math.max(...locationsData.map(l => l.order ?? 0)) + 1 : 0;
+            SR.forEach(s => {
+                if (existingCodes.has(s.code)) return;
+                locationsData.push({ id: 'loc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: s.name, code: s.code, type: s.type || 'station', group: 'Southern Region', active: true, order: base++ });
+                added++;
+            });
+            if (!added) { showToast('Southern Region locations are already loaded.'); return; }
+            saveDataToFirebase();
+            refreshLocationSelectors();
+            renderLocations();
+            showToast(`Added ${added} location${added === 1 ? '' : 's'}.`);
+        });
+
+        locationsList.addEventListener('click', (e) => {
+            const archiveBtn = e.target.closest('.loc-archive');
+            const deleteBtn = e.target.closest('.loc-delete');
+            if (archiveBtn) {
+                const l = locationById(archiveBtn.dataset.id);
+                if (l) { l.active = l.active === false; saveDataToFirebase(); refreshLocationSelectors(); renderLocations(); }
+            } else if (deleteBtn) {
+                const id = deleteBtn.dataset.id;
+                const inUse = gapsData.some(g => g.locationId === id) || remindersData.some(r => r.locationId === id) || claimsData.some(c => c.locationId === id);
+                const msg = inUse
+                    ? 'This location is used by existing records. Delete it? Those records will become "Unassigned".'
+                    : 'Delete this location?';
+                if (confirm(msg)) {
+                    locationsData = locationsData.filter(l => l.id !== id);
+                    saveDataToFirebase();
+                    refreshLocationSelectors();
+                    renderLocations();
+                    showToast('Location deleted.');
+                }
+            }
+        });
+
+        locationBoard.addEventListener('click', (e) => {
+            const card = e.target.closest('[data-loc-card]');
+            if (!card) return;
+            gapsLocationFilter = card.dataset.locCard; // '' = unassigned, else id
+            const gf = document.getElementById('gaps-location-filter');
+            if (gf) gf.value = gapsLocationFilter;
+            switchTab('gaps');
+            switchGapsView('active');
         });
 
         // Personal expenses: add
@@ -2420,12 +2754,14 @@
                 action: document.getElementById('new-action').value,
                 responsible: document.getElementById('new-responsible').value,
                 accountable: document.getElementById('new-accountable').value,
+                locationId: (document.getElementById('new-gap-location') || {}).value || '',
                 status: 'Not Started',
                 comments: [],
                 notes: ''
             });
             saveDataToFirebase();
             addGapForm.reset();
+            refreshLocationSelectors();
             showToast('New gap item added successfully!');
         });
 
@@ -2477,6 +2813,7 @@
             let deadline = document.getElementById('new-reminder-deadline').value; // '' or 'YYYY-MM-DDTHH:MM'
             const awb = document.getElementById('new-reminder-awb').value.trim();
             const recurPeriod = document.getElementById('new-reminder-recur').value;
+            const locationId = (document.getElementById('new-reminder-location') || {}).value || '';
             if (category === 'shipment' && !awb) {
                 showToast('Shipment reminders require an AWB number.', true);
                 document.getElementById('new-reminder-awb').focus();
@@ -2486,12 +2823,13 @@
             if (category === 'recurring' && !deadline) deadline = todayStr();
             if (reminderText) {
                 const newId = remindersData.length > 0 ? Math.max(...remindersData.map(r => r.id)) + 1 : 1;
-                const newReminder = { id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [], createdAt: new Date().toISOString(), deadline: deadline || '', awb: category === 'shipment' ? awb : '', recurPeriod: category === 'recurring' ? recurPeriod : '' };
+                const newReminder = { id: newId, text: reminderText, priority: priority, category: category, status: 'pending', remarks: [], createdAt: new Date().toISOString(), deadline: deadline || '', awb: category === 'shipment' ? awb : '', recurPeriod: category === 'recurring' ? recurPeriod : '', locationId: locationId };
                 remindersData.push(newReminder);
                 logActivity('created', newReminder);
                 saveDataToFirebase();
                 addReminderForm.reset();
                 syncAwbVisibility();
+                refreshLocationSelectors();
                 showToast('Reminder added!');
             }
         });
